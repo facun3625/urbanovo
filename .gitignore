@@ -1,0 +1,16 @@
+node_modules/
+.next/
+out/
+build/
+.env
+.env*.local
+*.tsbuildinfo
+next-env.d.ts
+src/generated/
+data/backups/
+# Base de MaxMind (62 MB, licencia que no permite redistribuirla): se baja
+# en el servidor con scripts/update-geolite2.sh o se copia con scp.
+data/*.mmdb
+# Script heredado de la app original, Urbanovo no lo usa.
+scripts/provision-*
+.DS_Store

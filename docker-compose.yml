@@ -1,0 +1,16 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: urbanovo-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: urbanovo
+      POSTGRES_PASSWORD: urbanovo
+      POSTGRES_DB: urbanovo
+    ports:
+      - "5464:5432"
+    volumes:
+      - urbanovo_db_data:/var/lib/postgresql/data
+
+volumes:
+  urbanovo_db_data:
