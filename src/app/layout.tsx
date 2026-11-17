@@ -48,8 +48,12 @@ export async function generateMetadata(): Promise<Metadata> {
   const description =
     seo.description ||
     `Propiedades en venta y alquiler${city ? ` en ${city}` : ""}. ${storeName}: casas, departamentos, terrenos y emprendimientos.`;
-  // Imagen al compartir el sitio: la cargada en SEO, si no la portada o el logo.
-  const shareImage = seo.ogImageUrl || coverUrl || logoUrl;
+  // Imagen al compartir el sitio: la cargada en SEO, si no el logo sobre
+  // fondo blanco (api/og-logo), y si no hay logo la portada. El ?v= cambia
+  // con el logo para que WhatsApp no siga mostrando uno viejo en caché.
+  const logoVersion = logoUrl?.split("/").pop()?.split(".")[0];
+  const shareImage =
+    seo.ogImageUrl || (logoUrl ? `/api/og-logo?v=${logoVersion}` : null) || coverUrl;
   return {
     metadataBase: new URL(SITE_URL),
     // Las páginas internas ponen su título y se le suma el nombre de la
