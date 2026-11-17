@@ -256,6 +256,12 @@ export async function EstateCatalog({ tenantId }: { tenantId: string }) {
               )}
             </div>
           )}
+          {/* En celular la mitad derecha no entra: la portada va abajo del buscador. */}
+          {(settings.coverUrl || settings.coverVideoUrl) && (
+            <div className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl bg-primary/10 lg:hidden">
+              <CoverMedia videoUrl={settings.coverVideoUrl} imageUrl={settings.coverUrl} sizes="100vw" />
+            </div>
+          )}
         </div>
         <div className="public-enter-side-right public-enter-delay-1 relative hidden overflow-hidden bg-primary/10 lg:block">
           {settings.coverUrl || settings.coverVideoUrl ? (
