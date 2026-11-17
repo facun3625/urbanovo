@@ -206,12 +206,25 @@ export async function EstateCatalog({ tenantId }: { tenantId: string }) {
     );
   }
 
+  const hasCover = Boolean(settings.coverUrl || settings.coverVideoUrl);
   return (
     <div className="flex flex-1 flex-col">
       <StoreHero />
       <section className="grid overflow-hidden border-b lg:min-h-[300px] lg:grid-cols-[minmax(0,7fr)_minmax(280px,3fr)]">
         <div className="public-enter-side flex min-w-0 flex-col justify-center gap-5 bg-muted/50 px-4 py-8 sm:px-6 lg:px-10 lg:py-10 xl:px-12">
-          <div>
+          {/* En celular la mitad derecha no entra: la portada pasa a ser el
+              fondo del título, de borde a borde, arriba del buscador. */}
+          {hasCover && (
+            <div className="relative -mx-4 -mt-8 flex min-h-56 items-end overflow-hidden sm:-mx-6 lg:hidden">
+              <CoverMedia videoUrl={settings.coverVideoUrl} imageUrl={settings.coverUrl} sizes="100vw" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/30 to-black/5" aria-hidden />
+              <div className="relative px-4 pb-6 pt-16 text-white sm:px-6">
+                <h1 className="text-[clamp(1.8rem,4vw,2.5rem)] font-bold tracking-tight">Buscar propiedades</h1>
+                <p className="mt-1.5 text-white/85">Encontrá la propiedad que estás buscando</p>
+              </div>
+            </div>
+          )}
+          <div className={hasCover ? "max-lg:hidden" : undefined}>
             <h1 className="text-[clamp(1.8rem,4vw,2.5rem)] font-bold tracking-tight">
               Buscar propiedades
             </h1>
@@ -254,12 +267,6 @@ export async function EstateCatalog({ tenantId }: { tenantId: string }) {
                   {settings.phone}
                 </span>
               )}
-            </div>
-          )}
-          {/* En celular la mitad derecha no entra: la portada va abajo del buscador. */}
-          {(settings.coverUrl || settings.coverVideoUrl) && (
-            <div className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl bg-primary/10 lg:hidden">
-              <CoverMedia videoUrl={settings.coverVideoUrl} imageUrl={settings.coverUrl} sizes="100vw" />
             </div>
           )}
         </div>
