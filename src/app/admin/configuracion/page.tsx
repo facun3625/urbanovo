@@ -10,6 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PopupForm } from "./popup-form";
 import { SeoSettingsForm } from "./seo-settings-form";
 import { TelegramSettingsForm } from "./telegram-settings-form";
+import { MapSettingsForm } from "./map-settings-form";
 import { AiAssistantSettingsForm } from "./ai-assistant-settings-form";
 import { MercadoLibreSettingsForm } from "./mercadolibre-settings-form";
 import { BackupsPanel } from "./backups-panel";
@@ -20,7 +21,7 @@ import { listBackups, MAX_BACKUPS } from "@/lib/backup";
 import { WhatsappTemplatesForm } from "./whatsapp-templates-form";
 import { getWhatsappTemplates } from "@/lib/settings";
 
-const VALID_TABS = new Set(["mantenimiento", "popup", "seo", "telegram", "ia", "mercadolibre", "correo", "whatsapp", "backups"]);
+const VALID_TABS = new Set(["mantenimiento", "popup", "seo", "mapas", "telegram", "ia", "mercadolibre", "correo", "whatsapp", "backups"]);
 
 const backupDate = new Intl.DateTimeFormat("es-AR", {
   dateStyle: "full",
@@ -78,6 +79,9 @@ export default async function ConfiguracionPage({
           <TabsTrigger value="seo" className="flex-1">
             SEO
           </TabsTrigger>
+          <TabsTrigger value="mapas" className="flex-1">
+            Mapas
+          </TabsTrigger>
           <TabsTrigger value="telegram" className="flex-1">
             Telegram
           </TabsTrigger>
@@ -113,6 +117,14 @@ export default async function ConfiguracionPage({
             key={JSON.stringify(seoSettings)}
             settings={seoSettings}
             storeName={settings.storeName}
+          />
+        </TabsContent>
+
+        <TabsContent value="mapas">
+          <MapSettingsForm
+            key={`${settings.mapProvider}-${settings.googleMapsApiKey}`}
+            provider={settings.mapProvider}
+            apiKey={settings.googleMapsApiKey}
           />
         </TabsContent>
 

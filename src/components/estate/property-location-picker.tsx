@@ -5,6 +5,8 @@ import "leaflet/dist/leaflet.css";
 import { MAP_PIN_ICON } from "./map-pin";
 import { SearchIcon } from "lucide-react";
 import { inputClass } from "@/components/estate/form-field-class";
+import { useMapProvider } from "@/lib/google-maps";
+import { GooglePickerMap } from "./google-picker-map";
 
 const DEFAULT_CENTER: [number, number] = [-31.4201, -64.1888]; // Córdoba
 
@@ -108,6 +110,7 @@ export function PropertyLocationPicker({
   const [showManual, setShowManual] = useState(false);
   const [scrollZoomEnabled, setScrollZoomEnabled] = useState(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const mapProvider = useMapProvider();
 
   // Propiedades migradas que tienen coordenadas pero todavía no una
   // dirección guardada (de antes de agregar este campo): completamos el
@@ -204,38 +207,44 @@ export function PropertyLocationPicker({
       </div>
 
       <div className="relative h-72 overflow-hidden rounded-xl border">
-        <MapContainer
-          center={point ?? DEFAULT_CENTER}
-          zoom={point ? 15 : 12}
-          scrollWheelZoom={scrollZoomEnabled}
-          style={{ height: "100%", width: "100%" }}
-        >
-          <TileLayer
-            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-          />
-          <ClickToPick onPick={pick} onFirstClick={() => setScrollZoomEnabled(true)} />
-          {point && <Recenter point={point} />}
-          {point && (
-            <Marker
-              position={point}
-              icon={MAP_PIN_ICON}
-              draggable
-              eventHandlers={{
-                dragend: (e) => {
-                  const { lat, lng } = e.target.getLatLng();
-                  pick(lat, lng);
-                },
-              }}
-            />
-          )}
-        </MapContainer>
-        {!scrollZoomEnabled && (
-          <div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-black/10">
-            <span className="rounded-full bg-black/70 px-3 py-1.5 text-xs font-medium text-white">
-              Hacé clic en el mapa para activar el zoom con scroll
-            </span>
-          </div>
+        {mapProvider.provider === "google" ? (
+          <GooglePickerMap apiKey={mapProvider.apiKey} point={point} defaultCenter={DEFAULT_CENTER} onPick={pick} />
+        ) : (
+          <>
+            <MapContainer
+              center={point ?? DEFAULT_CENTER}
+              zoom={point ? 15 : 12}
+              scrollWheelZoom={scrollZoomEnabled}
+              style={{ height: "100%", width: "100%" }}
+            >
+              <TileLayer
+                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+              />
+              <ClickToPick onPick={pick} onFirstClick={() => setScrollZoomEnabled(true)} />
+              {point && <Recenter point={point} />}
+              {point && (
+                <Marker
+                  position={point}
+                  icon={MAP_PIN_ICON}
+                  draggable
+                  eventHandlers={{
+                    dragend: (e) => {
+                      const { lat, lng } = e.target.getLatLng();
+                      pick(lat, lng);
+                    },
+                  }}
+                />
+              )}
+            </MapContainer>
+            {!scrollZoomEnabled && (
+              <div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-black/10">
+                <span className="rounded-full bg-black/70 px-3 py-1.5 text-xs font-medium text-white">
+                  Hacé clic en el mapa para activar el zoom con scroll
+                </span>
+              </div>
+            )}
+          </>
         )}
       </div>
       <p className="text-xs text-muted-foreground">

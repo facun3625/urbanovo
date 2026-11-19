@@ -47,7 +47,15 @@ export type StoreSettings = {
   footerLogoHeight: number;
   // Formulario "Recibí novedades por mail" arriba del pie del sitio.
   newsletterSignup: boolean;
+  // Mapas del sitio y del admin: OpenStreetMap (gratis, el de siempre) o
+  // Google Maps con la clave que pega la inmobiliaria en Configuración →
+  // Mapas. Es una clave de navegador (restringida por dominio), así que no
+  // es secreta: viaja al cliente como el resto de estos ajustes.
+  mapProvider: MapProvider;
+  googleMapsApiKey: string | null;
 };
+
+export type MapProvider = "osm" | "google";
 
 const DEFAULT_STORE_NAME = "Pedidos";
 // HTML, no texto plano: estos dos se editan con RichTextEditor (ver
@@ -103,6 +111,8 @@ const SETTINGS_KEYS = [
   "arq_enabled",
   "arq_config",
   "consorcio_page",
+  "map_provider",
+  "google_maps_api_key",
 ] as const;
 
 function parseArqConfig(value: string | undefined): ArqConfig {
@@ -169,6 +179,8 @@ export const getStoreSettings = cache(
         ),
       ),
       newsletterSignup: map.newsletter_signup !== "off",
+      mapProvider: map.map_provider === "google" ? "google" : "osm",
+      googleMapsApiKey: map.google_maps_api_key || null,
     };
   },
 );

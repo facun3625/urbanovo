@@ -314,3 +314,44 @@ async function runUpdateAiAssistantSettings(formData: FormData) {
   await logActivity(tenant.id, { entity: "configuracion", action: "UPDATE", summary: "Cambió la configuración del asistente IA" });
   return { ok: true as const };
 }
+
+// ---------- Mapas (OpenStreetMap o Google Maps) ----------
+
+const mapSettingsSchema = z.object({
+  provider: z.enum(["osm", "google"]),
+  apiKey: z
+    .string()
+    .trim()
+    .max(200)
+    .refine((key) => !key || /^[A-Za-z0-9_-]+$/.test(key), "La clave tiene caracteres que no van (se pegó con espacios o comillas?)"),
+});
+
+export async function updateMapSettings(formData: FormData) {
+  try {
+    return await runUpdateMapSettings(formData);
+  } catch (err) {
+    return toUserError(err, "No se pudo guardar la configuración");
+  }
+}
+
+async function runUpdateMapSettings(formData: FormData) {
+  const { tenant } = await requireTenantAdmin();
+  const parsed = mapSettingsSchema.parse({
+    provider: formData.get("provider"),
+    apiKey: formData.get("apiKey") ?? "",
+  });
+  if (parsed.provider === "google" && !parsed.apiKey) {
+    throw new ActionError("Para usar Google Maps pegá la clave de la API");
+  }
+  await Promise.all([
+    saveTextSetting(tenant.id, parsed.provider, "map_provider"),
+    saveTextSetting(tenant.id, parsed.apiKey, "google_maps_api_key"),
+  ]);
+  revalidatePath("/", "layout");
+  await logActivity(tenant.id, {
+    entity: "configuracion",
+    action: "UPDATE",
+    summary: parsed.provider === "google" ? "Pasó los mapas a Google Maps" : "Pasó los mapas a OpenStreetMap",
+  });
+  return { ok: true as const };
+}
