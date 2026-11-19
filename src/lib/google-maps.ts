@@ -2,6 +2,7 @@
 
 import { useSyncExternalStore } from "react";
 import { useStoreSettings } from "@/lib/store-settings-context";
+import { mapPinUrl } from "@/components/estate/map-pin-svg";
 
 // Carga del script de Google Maps (una sola vez por página) y detección de
 // clave inválida: Google llama a window.gm_authFailure cuando la clave no
@@ -66,4 +67,10 @@ export function useMapProvider(): { provider: "google"; apiKey: string } | { pro
     return { provider: "google", apiKey: googleMapsApiKey };
   }
   return { provider: "osm" };
+}
+
+// URL del pin de los mapas (globito con el favicon del sitio).
+export function useMapPinUrl() {
+  const { faviconUrl } = useStoreSettings();
+  return mapPinUrl(faviconUrl);
 }

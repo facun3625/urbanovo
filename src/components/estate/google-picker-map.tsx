@@ -8,11 +8,13 @@ import { useGoogleMap } from "./use-google-map";
 // el mapa o arrastrar el pin para elegir el punto.
 export function GooglePickerMap({
   apiKey,
+  pinUrl,
   point,
   defaultCenter,
   onPick,
 }: {
   apiKey: string;
+  pinUrl: string;
   point: [number, number] | null;
   defaultCenter: [number, number];
   onPick: (lat: number, lng: number) => void;
@@ -32,7 +34,7 @@ export function GooglePickerMap({
 
   useEffect(() => {
     if (!map) return;
-    const marker = new google.maps.Marker({ map: null, icon: googlePinIcon(), draggable: true });
+    const marker = new google.maps.Marker({ map: null, icon: googlePinIcon(pinUrl), draggable: true });
     markerRef.current = marker;
     const dragListener = marker.addListener("dragend", () => {
       const position = marker.getPosition();
@@ -47,7 +49,7 @@ export function GooglePickerMap({
       marker.setMap(null);
       markerRef.current = null;
     };
-  }, [map]);
+  }, [map, pinUrl]);
 
   // Mover el pin (y el mapa) cuando cambia el punto: búsqueda, clic,
   // arrastre o coordenadas a mano.
@@ -64,7 +66,7 @@ export function GooglePickerMap({
     marker.setMap(map);
     map.panTo({ lat, lng });
     if ((map.getZoom() ?? 0) < 13) map.setZoom(15);
-  }, [map, lat, lng]);
+  }, [map, lat, lng, pinUrl]);
 
   return <div ref={ref} style={{ height: "100%", width: "100%" }} />;
 }

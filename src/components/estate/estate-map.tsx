@@ -1,8 +1,9 @@
 "use client";
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
-import { MAP_PIN_ICON } from "./map-pin";
+import { leafletPinIcon } from "./map-pin";
+import { useMapPinUrl } from "@/lib/google-maps";
 
 import { MapPropertyCard, type MapProperty } from "./map-property-card";
 
@@ -28,6 +29,8 @@ export function EstateMap({ properties }: { properties: MapProperty[] }) {
     p.longitude,
   ]);
   const center: [number, number] = points[0] ?? [-31.4201, -64.1888];
+  const pinUrl = useMapPinUrl();
+  const pinIcon = useMemo(() => leafletPinIcon(pinUrl), [pinUrl]);
 
   return (
     <MapContainer
@@ -46,7 +49,7 @@ export function EstateMap({ properties }: { properties: MapProperty[] }) {
           <Marker
             key={p.id}
             position={[p.latitude, p.longitude]}
-            icon={MAP_PIN_ICON}
+            icon={pinIcon}
           >
             <Popup minWidth={200} maxWidth={220}>
               <MapPropertyCard property={p} />

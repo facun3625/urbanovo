@@ -5,10 +5,12 @@ import { createRoot } from "react-dom/client";
 import { googlePinIcon } from "./google-map-pin";
 import { MapPropertyCard, type MapProperty } from "./map-property-card";
 import { useGoogleMap } from "./use-google-map";
+import { useMapPinUrl } from "@/lib/google-maps";
 
 // Versión Google Maps del mapa de propiedades (página /mapa).
 export function GoogleEstateMap({ apiKey, properties }: { apiKey: string; properties: MapProperty[] }) {
   const first = properties[0];
+  const pinUrl = useMapPinUrl();
   const { ref, map } = useGoogleMap(apiKey, {
     center: first ? { lat: first.latitude, lng: first.longitude } : { lat: -31.4201, lng: -64.1888 },
     zoom: 13,
@@ -16,7 +18,7 @@ export function GoogleEstateMap({ apiKey, properties }: { apiKey: string; proper
 
   useEffect(() => {
     if (!map) return;
-    const icon = googlePinIcon();
+    const icon = googlePinIcon(pinUrl);
     const info = new google.maps.InfoWindow({ maxWidth: 240 });
     const cardHolder = document.createElement("div");
     cardHolder.style.width = "210px";
@@ -56,7 +58,7 @@ export function GoogleEstateMap({ apiKey, properties }: { apiKey: string; proper
       // Desmontar en otro tick: React no deja desmontar un root durante un render.
       setTimeout(() => cardRoot.unmount());
     };
-  }, [map, properties]);
+  }, [map, properties, pinUrl]);
 
   return <div ref={ref} style={{ height: "100%", width: "100%" }} />;
 }

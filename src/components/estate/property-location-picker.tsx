@@ -1,11 +1,11 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { MapContainer, TileLayer, Marker, useMap, useMapEvents } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
-import { MAP_PIN_ICON } from "./map-pin";
+import { leafletPinIcon } from "./map-pin";
 import { SearchIcon } from "lucide-react";
 import { inputClass } from "@/components/estate/form-field-class";
-import { useMapProvider } from "@/lib/google-maps";
+import { useMapPinUrl, useMapProvider } from "@/lib/google-maps";
 import { GooglePickerMap } from "./google-picker-map";
 
 const DEFAULT_CENTER: [number, number] = [-31.4201, -64.1888]; // Córdoba
@@ -111,6 +111,8 @@ export function PropertyLocationPicker({
   const [scrollZoomEnabled, setScrollZoomEnabled] = useState(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const mapProvider = useMapProvider();
+  const pinUrl = useMapPinUrl();
+  const pinIcon = useMemo(() => leafletPinIcon(pinUrl), [pinUrl]);
 
   // Propiedades migradas que tienen coordenadas pero todavía no una
   // dirección guardada (de antes de agregar este campo): completamos el
@@ -208,7 +210,7 @@ export function PropertyLocationPicker({
 
       <div className="relative h-72 overflow-hidden rounded-xl border">
         {mapProvider.provider === "google" ? (
-          <GooglePickerMap apiKey={mapProvider.apiKey} point={point} defaultCenter={DEFAULT_CENTER} onPick={pick} />
+          <GooglePickerMap apiKey={mapProvider.apiKey} pinUrl={pinUrl} point={point} defaultCenter={DEFAULT_CENTER} onPick={pick} />
         ) : (
           <>
             <MapContainer
@@ -226,7 +228,7 @@ export function PropertyLocationPicker({
               {point && (
                 <Marker
                   position={point}
-                  icon={MAP_PIN_ICON}
+                  icon={pinIcon}
                   draggable
                   eventHandlers={{
                     dragend: (e) => {
