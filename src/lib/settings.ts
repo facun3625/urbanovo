@@ -2,6 +2,7 @@ import { cache } from "react";
 import { mergeArqConfig, type ArqConfig } from "@/lib/arquitectura";
 import { parseConsorcio, type ConsorcioPage } from "@/lib/consorcio";
 import { prisma } from "@/lib/prisma";
+import { DEFAULT_MAP_PIN_BG_COLOR, DEFAULT_MAP_PIN_BORDER_COLOR } from "@/components/estate/map-pin-svg";
 import { WHATSAPP_TEMPLATE_IDS, WHATSAPP_TEMPLATES, type WhatsappTemplates } from "@/lib/whatsapp-templates";
 
 export type StoreSettings = {
@@ -53,7 +54,18 @@ export type StoreSettings = {
   // es secreta: viaja al cliente como el resto de estos ajustes.
   mapProvider: MapProvider;
   googleMapsApiKey: string | null;
+  // Pin de los mapas: colores del globito e imagen de adentro (sin imagen
+  // propia usa el favicon; sin favicon, la casita).
+  mapPin: MapPinSettings;
 };
+
+export type MapPinSettings = {
+  borderColor: string;
+  bgColor: string;
+  imageUrl: string | null;
+};
+
+export { DEFAULT_MAP_PIN_BG_COLOR, DEFAULT_MAP_PIN_BORDER_COLOR };
 
 export type MapProvider = "osm" | "google";
 
@@ -113,6 +125,9 @@ const SETTINGS_KEYS = [
   "consorcio_page",
   "map_provider",
   "google_maps_api_key",
+  "map_pin_border_color",
+  "map_pin_bg_color",
+  "map_pin_image_url",
 ] as const;
 
 function parseArqConfig(value: string | undefined): ArqConfig {
@@ -181,6 +196,11 @@ export const getStoreSettings = cache(
       newsletterSignup: map.newsletter_signup !== "off",
       mapProvider: map.map_provider === "google" ? "google" : "osm",
       googleMapsApiKey: map.google_maps_api_key || null,
+      mapPin: {
+        borderColor: map.map_pin_border_color || DEFAULT_MAP_PIN_BORDER_COLOR,
+        bgColor: map.map_pin_bg_color || DEFAULT_MAP_PIN_BG_COLOR,
+        imageUrl: map.map_pin_image_url || null,
+      },
     };
   },
 );

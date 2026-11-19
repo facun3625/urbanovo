@@ -11,6 +11,7 @@ import { PopupForm } from "./popup-form";
 import { SeoSettingsForm } from "./seo-settings-form";
 import { TelegramSettingsForm } from "./telegram-settings-form";
 import { MapSettingsForm } from "./map-settings-form";
+import { MapPinForm } from "./map-pin-form";
 import { AiAssistantSettingsForm } from "./ai-assistant-settings-form";
 import { MercadoLibreSettingsForm } from "./mercadolibre-settings-form";
 import { BackupsPanel } from "./backups-panel";
@@ -126,6 +127,9 @@ export default async function ConfiguracionPage({
             provider={settings.mapProvider}
             apiKey={settings.googleMapsApiKey}
           />
+          <div className="mt-4">
+            <MapPinForm key={JSON.stringify(settings.mapPin)} pin={settings.mapPin} faviconUrl={settings.faviconUrl} />
+          </div>
         </TabsContent>
 
         <TabsContent value="telegram">

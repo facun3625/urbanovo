@@ -1,24 +1,28 @@
 import sharp from "sharp";
 import { getCurrentTenant } from "@/lib/tenant";
-import { getStoreSettings } from "@/lib/settings";
-import { PIN_HEIGHT, PIN_WIDTH, pinSvg } from "@/components/estate/map-pin-svg";
+import { DEFAULT_MAP_PIN_BG_COLOR, DEFAULT_MAP_PIN_BORDER_COLOR, getStoreSettings } from "@/lib/settings";
+import {
+  PIN_HEAD_CENTER,
+  PIN_HEIGHT,
+  PIN_IMAGE_SIZE,
+  PIN_WIDTH,
+  pinSvg,
+} from "@/components/estate/map-pin-svg";
 
 // Pin de los mapas en PNG al doble de tamaño (se ve nítido en pantallas
-// retina): el globito con el favicon del sitio en la cabeza. Sin favicon,
-// o si no se puede leer, va la casita.
+// retina): el globito con los colores de Configuración → Mapas y la imagen
+// elegida ahí (o el favicon) en la cabeza. Sin imagen, va la casita.
 const SCALE = 2;
-// Cuadrado donde va el favicon, centrado en la cabeza del globito (centro
-// en 18,18 del pin de 36×46).
-const ICON_SIZE = 20 * SCALE;
-const ICON_OFFSET = 18 * SCALE - ICON_SIZE / 2;
+const IMAGE_SIZE = PIN_IMAGE_SIZE * SCALE;
+const IMAGE_OFFSET = PIN_HEAD_CENTER * SCALE - IMAGE_SIZE / 2;
 
-async function faviconLayer(faviconUrl: string | null) {
-  if (!faviconUrl) return null;
+async function imageLayer(url: string | null) {
+  if (!url) return null;
   try {
-    const response = await fetch(faviconUrl);
+    const response = await fetch(url);
     if (!response.ok) return null;
     return await sharp(Buffer.from(await response.arrayBuffer()), { density: 300 })
-      .resize(ICON_SIZE, ICON_SIZE, { fit: "contain", background: { r: 255, g: 255, b: 255, alpha: 0 } })
+      .resize(IMAGE_SIZE, IMAGE_SIZE, { fit: "contain", background: { r: 0, g: 0, b: 0, alpha: 0 } })
       .png()
       .toBuffer();
   } catch {
@@ -28,12 +32,13 @@ async function faviconLayer(faviconUrl: string | null) {
 
 export async function GET() {
   const tenant = await getCurrentTenant();
-  const faviconUrl = tenant ? (await getStoreSettings(tenant.id)).faviconUrl : null;
-  const icon = await faviconLayer(faviconUrl);
+  const settings = tenant ? await getStoreSettings(tenant.id) : null;
+  const style = settings?.mapPin ?? { borderColor: DEFAULT_MAP_PIN_BORDER_COLOR, bgColor: DEFAULT_MAP_PIN_BG_COLOR };
+  const image = await imageLayer(settings?.mapPin.imageUrl ?? settings?.faviconUrl ?? null);
 
-  let pin = sharp(Buffer.from(pinSvg(!icon)), { density: 72 * SCALE }).resize(PIN_WIDTH * SCALE, PIN_HEIGHT * SCALE);
-  if (icon) {
-    pin = sharp(await pin.png().toBuffer()).composite([{ input: icon, left: ICON_OFFSET, top: ICON_OFFSET }]);
+  let pin = sharp(Buffer.from(pinSvg(style, !image)), { density: 72 * SCALE }).resize(PIN_WIDTH * SCALE, PIN_HEIGHT * SCALE);
+  if (image) {
+    pin = sharp(await pin.png().toBuffer()).composite([{ input: image, left: IMAGE_OFFSET, top: IMAGE_OFFSET }]);
   }
   const png = await pin.png().toBuffer();
 

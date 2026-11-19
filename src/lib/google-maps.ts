@@ -69,8 +69,8 @@ export function useMapProvider(): { provider: "google"; apiKey: string } | { pro
   return { provider: "osm" };
 }
 
-// URL del pin de los mapas (globito con el favicon del sitio).
+// URL del pin de los mapas (colores e imagen de Configuración → Mapas).
 export function useMapPinUrl() {
-  const { faviconUrl } = useStoreSettings();
-  return mapPinUrl(faviconUrl);
+  const { faviconUrl, mapPin } = useStoreSettings();
+  return mapPinUrl(mapPin, faviconUrl);
 }

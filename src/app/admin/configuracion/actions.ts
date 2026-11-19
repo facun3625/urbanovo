@@ -355,3 +355,36 @@ async function runUpdateMapSettings(formData: FormData) {
   });
   return { ok: true as const };
 }
+
+// ---------- Pin de los mapas ----------
+
+const hexColor = z.string().regex(/^#[0-9a-fA-F]{6}$/, "Usá un color en formato #RRGGBB");
+
+export async function updateMapPin(formData: FormData) {
+  try {
+    return await runUpdateMapPin(formData);
+  } catch (err) {
+    return toUserError(err, "No se pudo guardar el pin");
+  }
+}
+
+async function runUpdateMapPin(formData: FormData) {
+  const { tenant } = await requireTenantAdmin();
+  const borderColor = hexColor.parse(formData.get("borderColor"));
+  const bgColor = hexColor.parse(formData.get("bgColor"));
+  const image = formData.get("image") as File | null;
+
+  await Promise.all([
+    saveTextSetting(tenant.id, borderColor.toLowerCase(), "map_pin_border_color"),
+    saveTextSetting(tenant.id, bgColor.toLowerCase(), "map_pin_bg_color"),
+  ]);
+  if (image && image.size > 0) {
+    await saveImageSetting(tenant.id, image, "map_pin_image_url");
+  } else if (formData.get("removeImage") === "true") {
+    await prisma.settings.deleteMany({ where: { tenantId: tenant.id, key: "map_pin_image_url" } });
+  }
+
+  revalidatePath("/", "layout");
+  await logActivity(tenant.id, { entity: "configuracion", action: "UPDATE", summary: "Cambió el pin de los mapas" });
+  return { ok: true as const };
+}
