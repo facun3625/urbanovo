@@ -193,6 +193,7 @@ export async function saveEstateRecord(
         ...raw,
         published: form.has("published"),
         featured: form.has("featured"),
+        pool: form.has("pool"),
         saleShowPrice: form.has("saleShowPrice"),
         rentShowPrice: form.has("rentShowPrice"),
       });
@@ -384,6 +385,7 @@ export async function saveEstateRecord(
               ...raw,
               published: form.has("published"),
               featured: form.has("featured"),
+              pool: form.has("pool"),
               saleShowPrice: form.has("saleShowPrice"),
               rentShowPrice: form.has("rentShowPrice"),
             });

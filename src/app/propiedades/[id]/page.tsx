@@ -2,7 +2,8 @@ import Link from "next/link";
 import Image from "next/image";
 import { headers } from "next/headers";
 import { notFound } from "next/navigation";
-import { MapPin, MessageCircle, Pencil } from "lucide-react";
+import { BadgeCheck, Bath, BedDouble, CarFront, Compass, MapPin, MessageCircle, PawPrint, Pencil, Scan, WavesLadder, type LucideIcon } from "lucide-react";
+import { PropertyTypeIcon } from "@/components/estate/property-type-icon";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
 import { getCurrentTenant } from "@/lib/tenant";
@@ -142,7 +143,8 @@ export default async function PropertyPage({
           </Link>
           <div className="mt-5 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div className="min-w-0">
-              <p className="text-xs font-semibold uppercase tracking-wide text-primary">
+              <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-primary">
+                <PropertyTypeIcon type={p.propertyType} className="size-4 shrink-0" />
                 {p.propertyType} · {p.code}
               </p>
               <h1 className="mt-2 text-[clamp(1.75rem,5vw,2.5rem)] font-semibold leading-tight text-balance">{p.title}</h1>
@@ -175,20 +177,23 @@ export default async function PropertyPage({
             <div className="min-w-0">
               <PropertyGallery images={p.media.map((m) => ({ id: m.id, url: m.url }))} title={p.title} />
               <div className="my-6 grid grid-cols-2 gap-2 sm:gap-3 md:grid-cols-4">
-                {[
-                  ["Dormitorios", p.bedrooms],
-                  ["Baños", p.bathrooms],
-                  ["Cocheras", p.garages],
-                  ...(p.orientation ? [["Orientación", p.orientation]] : []),
-                  ...(p.petsPolicy ? [["Mascotas", p.petsPolicy]] : []),
-                  ...(p.creditEligible != null ? [["Apto crédito", p.creditEligible ? "Sí" : "No"]] : []),
+                {(
                   [
-                    "Superficie total",
-                    p.totalArea ? `${p.totalArea} m²` : "Consultar",
-                  ],
-                ].map(([label, value]) => (
+                    ["Dormitorios", p.bedrooms, BedDouble],
+                    ["Baños", p.bathrooms, Bath],
+                    ["Cocheras", p.garages, CarFront],
+                    ...(p.pool ? [["Piscina", "Sí", WavesLadder]] : []),
+                    ...(p.orientation ? [["Orientación", p.orientation, Compass]] : []),
+                    ...(p.petsPolicy ? [["Mascotas", p.petsPolicy, PawPrint]] : []),
+                    ...(p.creditEligible != null ? [["Apto crédito", p.creditEligible ? "Sí" : "No", BadgeCheck]] : []),
+                    ["Superficie total", p.totalArea ? `${p.totalArea} m²` : "Consultar", Scan],
+                  ] as [string, string | number, LucideIcon][]
+                ).map(([label, value, Icon]) => (
                   <div key={label} className="min-w-0 rounded-xl border p-3 sm:p-4">
-                    <p className="text-xs text-muted-foreground">{label}</p>
+                    <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                      <Icon className="size-3.5 shrink-0" aria-hidden />
+                      {label}
+                    </p>
                     <p className="mt-1 font-semibold">{value}</p>
                   </div>
                 ))}

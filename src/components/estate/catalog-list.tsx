@@ -7,11 +7,18 @@ import {
   createCatalogItem,
   deleteCatalogItem,
   renameCatalogItem,
+  setPropertyTypeIcon,
   type CatalogKind,
 } from "@/app/admin/gestion/categorias/actions";
 import { inputClass } from "@/components/estate/form-field-class";
+import {
+  PROPERTY_TYPE_ICONS,
+  propertyTypeIcon,
+  suggestedPropertyTypeIcon,
+} from "@/lib/estate/property-type-icons";
+import { cn } from "@/lib/utils";
 
-type Item = { id: string; name: string };
+type Item = { id: string; name: string; icon?: string | null };
 
 export function CatalogList({
   kind,
@@ -29,6 +36,9 @@ export function CatalogList({
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editValue, setEditValue] = useState("");
   const [newValue, setNewValue] = useState("");
+  // Fila con la biblioteca de íconos abierta (solo tipos de propiedad).
+  const [iconPickerId, setIconPickerId] = useState<string | null>(null);
+  const withIcons = kind === "propertyTypes";
   const router = useRouter();
   const addInputRef = useRef<HTMLInputElement>(null);
 
@@ -81,13 +91,27 @@ export function CatalogList({
     });
   }
 
+  function handleIcon(id: string, icon: string) {
+    setBusyId(id);
+    start(async () => {
+      const result = await setPropertyTypeIcon(id, icon);
+      setBusyId(null);
+      if ("error" in result) {
+        toast.error(result.error);
+        return;
+      }
+      setIconPickerId(null);
+      router.refresh();
+    });
+  }
+
   return (
     <div className="rounded-2xl border bg-card p-5">
       <h2 className="font-semibold">{title}</h2>
       <p className="mt-1 text-sm text-muted-foreground">{description}</p>
       <ul className="mt-4 flex flex-col divide-y rounded-xl border">
         {items.map((item) => (
-          <li key={item.id} className="flex items-center gap-2 px-3 py-2">
+          <li key={item.id} className="flex flex-wrap items-center gap-2 px-3 py-2">
             {editingId === item.id ? (
               <>
                 <input
@@ -120,6 +144,23 @@ export function CatalogList({
               </>
             ) : (
               <>
+                {withIcons && (() => {
+                  const Icon = propertyTypeIcon(item.icon ?? suggestedPropertyTypeIcon(item.name));
+                  return (
+                    <button
+                      type="button"
+                      onClick={() => setIconPickerId(iconPickerId === item.id ? null : item.id)}
+                      aria-label={`Elegir ícono de ${item.name}`}
+                      aria-expanded={iconPickerId === item.id}
+                      className={cn(
+                        "rounded-lg border p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground",
+                        iconPickerId === item.id && "border-primary text-primary",
+                      )}
+                    >
+                      <Icon className="size-4" />
+                    </button>
+                  );
+                })()}
                 <span className="min-w-0 flex-1 truncate text-sm">{item.name}</span>
                 <button
                   type="button"
@@ -144,6 +185,32 @@ export function CatalogList({
                   )}
                 </button>
               </>
+            )}
+            {withIcons && iconPickerId === item.id && (
+              <div className="w-full pt-2">
+                <p className="mb-2 text-xs text-muted-foreground">Elegí el ícono de «{item.name}»:</p>
+                <div className="grid grid-cols-6 gap-1 sm:grid-cols-8">
+                  {Object.entries(PROPERTY_TYPE_ICONS).map(([key, { label, Icon }]) => {
+                    const current = (item.icon ?? suggestedPropertyTypeIcon(item.name)) === key;
+                    return (
+                      <button
+                        key={key}
+                        type="button"
+                        title={label}
+                        aria-label={label}
+                        disabled={busyId === item.id}
+                        onClick={() => handleIcon(item.id, key)}
+                        className={cn(
+                          "flex aspect-square items-center justify-center rounded-lg border text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-40",
+                          current && "border-primary bg-primary/10 text-primary",
+                        )}
+                      >
+                        <Icon className="size-4" />
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
             )}
           </li>
         ))}

@@ -6,6 +6,7 @@ import { Prisma } from "@/generated/prisma/client";
 import { requireTenantAdmin } from "@/lib/require-admin";
 import { toUserError } from "@/lib/action-error";
 import { requiredText } from "@/lib/estate/validation";
+import { PROPERTY_TYPE_ICONS } from "@/lib/estate/property-type-icons";
 
 export type CatalogKind =
   | "propertyTypes"
@@ -165,6 +166,21 @@ export async function deleteCatalogItem(kind: CatalogKind, id: string) {
         break;
     }
     refresh();
+    return { ok: true as const };
+  } catch (error) {
+    return actionError(error);
+  }
+}
+
+// Ícono de un tipo de propiedad (biblioteca en property-type-icons.ts). Se
+// ve en las tarjetas y la ficha del sitio público.
+export async function setPropertyTypeIcon(id: string, icon: string) {
+  const { tenant } = await requireTenantAdmin();
+  try {
+    if (!(icon in PROPERTY_TYPE_ICONS)) return { error: "Ese ícono no existe." };
+    await prisma.estatePropertyType.update({ where: { id, tenantId: tenant.id }, data: { icon } });
+    refresh();
+    revalidatePath("/", "layout");
     return { ok: true as const };
   } catch (error) {
     return actionError(error);

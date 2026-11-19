@@ -1,10 +1,11 @@
 import Link from "next/link";
 import Image from "next/image";
-import { Building2, MapPin, BedDouble, Bath, Scan } from "lucide-react";
+import { Building2, MapPin, BedDouble, Bath, Scan, CarFront, WavesLadder } from "lucide-react";
 
 import { money, labels } from "@/lib/estate/modules";
 import { contrastText } from "@/lib/contrast-color";
 import { FavoriteButton } from "./favorite-button";
+import { PropertyTypeIcon } from "./property-type-icon";
 
 // Mismo valor por defecto que DEFAULT_BADGE_COLOR en @/lib/settings — no se
 // importa de ahí para no arrastrar "@/lib/prisma" al bundle del cliente
@@ -20,6 +21,8 @@ export type CardProperty = {
   city: string;
   bedrooms: number;
   bathrooms: number;
+  garages: number;
+  pool: boolean;
   totalArea: { toString(): string } | null;
   media: { url: string }[];
   listings: {
@@ -78,7 +81,8 @@ export function PropertyCard({
         />
       </div>
       <div className="estate-property-card-body flex flex-1 flex-col p-4 sm:p-5">
-        <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+        <p className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+          <PropertyTypeIcon type={p.propertyType} className="size-3.5 shrink-0" />
           {p.propertyType}
         </p>
         <h3 className="mt-1.5 line-clamp-2 min-h-12 text-base font-semibold leading-6 transition-colors duration-300 ease-out group-hover:text-primary">{p.title}</h3>
@@ -88,15 +92,27 @@ export function PropertyCard({
             {[p.neighborhood, p.city].filter(Boolean).join(", ")}
           </span>
         </p>
-        <div className="my-3 flex gap-3 text-xs text-muted-foreground">
-          <span className="flex items-center gap-1">
+        <div className="my-3 flex flex-wrap gap-x-3 gap-y-1.5 text-xs text-muted-foreground">
+          <span className="flex items-center gap-1" title="Dormitorios">
             <BedDouble className="size-3.5" />
             {p.bedrooms}
           </span>
-          <span className="flex items-center gap-1">
+          <span className="flex items-center gap-1" title="Baños">
             <Bath className="size-3.5" />
             {p.bathrooms}
           </span>
+          {p.garages > 0 && (
+            <span className="flex items-center gap-1" title="Cocheras">
+              <CarFront className="size-3.5" />
+              {p.garages}
+            </span>
+          )}
+          {p.pool && (
+            <span className="flex items-center gap-1" title="Piscina">
+              <WavesLadder className="size-3.5" />
+              Piscina
+            </span>
+          )}
           {p.totalArea && (
             <span className="flex items-center gap-1">
               <Scan className="size-3.5" />

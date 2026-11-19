@@ -131,6 +131,7 @@ export const propertySchema = z
     bedrooms: z.coerce.number().int().min(0).max(1000),
     bathrooms: z.coerce.number().int().min(0).max(1000),
     garages: z.coerce.number().int().min(0).max(1000),
+    pool: z.boolean(),
     coveredArea: optionalAmount,
     totalArea: optionalAmount,
     description: notes,

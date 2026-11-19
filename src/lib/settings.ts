@@ -57,6 +57,10 @@ export type StoreSettings = {
   // Pin de los mapas: colores del globito e imagen de adentro (sin imagen
   // propia usa el favicon; sin favicon, la casita).
   mapPin: MapPinSettings;
+  // Ícono de cada tipo de inmueble (nombre del tipo → clave de
+  // PROPERTY_TYPE_ICONS), elegido en Categorías. Los que no tienen ícono
+  // elegido no están: se usa el sugerido por el nombre.
+  propertyTypeIcons: Record<string, string>;
 };
 
 export type MapPinSettings = {
@@ -140,11 +144,15 @@ function parseArqConfig(value: string | undefined): ArqConfig {
 
 export const getStoreSettings = cache(
   async (tenantId: string): Promise<StoreSettings> => {
-    const [rows, developmentCount] = await Promise.all([
+    const [rows, developmentCount, propertyTypes] = await Promise.all([
       prisma.settings.findMany({
         where: { tenantId, key: { in: [...SETTINGS_KEYS] } },
       }),
       prisma.estateDevelopment.count({ where: { tenantId, published: true } }),
+      prisma.estatePropertyType.findMany({
+        where: { tenantId, icon: { not: null } },
+        select: { name: true, icon: true },
+      }),
     ]);
     const map = Object.fromEntries(rows.map((r) => [r.key, r.value]));
     return {
@@ -201,6 +209,7 @@ export const getStoreSettings = cache(
         bgColor: map.map_pin_bg_color || DEFAULT_MAP_PIN_BG_COLOR,
         imageUrl: map.map_pin_image_url || null,
       },
+      propertyTypeIcons: Object.fromEntries(propertyTypes.map((t) => [t.name, t.icon as string])),
     };
   },
 );

@@ -153,6 +153,7 @@ export const modules: Record<string, Module> = {
       { name: "bedrooms", label: "Dormitorios", type: "number" },
       { name: "bathrooms", label: "Baños", type: "number" },
       { name: "garages", label: "Cocheras", type: "number" },
+      { name: "pool", label: "Tiene piscina", type: "checkbox" },
       {
         name: "coveredArea",
         label: "Superficie cubierta (m²)",
