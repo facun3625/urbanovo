@@ -399,6 +399,8 @@ export async function saveEstateRecord(
               rentCurrency,
               rentWhatsapp,
               rentShowPrice,
+              saleStatus,
+              rentStatus,
               ...data
             } = parsed;
             const saleEnabled = offerType === "SALE" || offerType === "BOTH";
@@ -409,9 +411,9 @@ export async function saveEstateRecord(
             record = id
               ? await tx.estateProperty.update({ where, data: { ...data, floorPlanUrl } })
               : await tx.estateProperty.create({ data: { ...data, floorPlanUrl, tenantId } });
-            for (const [operation, enabled, price, currency, isTemporary, whatsapp, showPrice] of [
-              ["SALE", saleEnabled, salePrice, saleCurrency, false, saleWhatsapp, saleShowPrice],
-              ["RENT", rentEnabled, rentPrice, rentCurrency, temporary, rentWhatsapp, rentShowPrice],
+            for (const [operation, enabled, price, currency, isTemporary, whatsapp, showPrice, status] of [
+              ["SALE", saleEnabled, salePrice, saleCurrency, false, saleWhatsapp, saleShowPrice, saleStatus],
+              ["RENT", rentEnabled, rentPrice, rentCurrency, temporary, rentWhatsapp, rentShowPrice, rentStatus],
             ] as const) {
               if (enabled)
                 await tx.estateListing.upsert({
@@ -427,8 +429,9 @@ export async function saveEstateRecord(
                     temporary: isTemporary,
                     whatsapp,
                     showPrice,
+                    status,
                   },
-                  update: { price, currency, temporary: isTemporary, whatsapp, showPrice },
+                  update: { price, currency, temporary: isTemporary, whatsapp, showPrice, status },
                 });
               else {
                 if (

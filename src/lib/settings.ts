@@ -2,6 +2,7 @@ import { cache } from "react";
 import { mergeArqConfig, type ArqConfig } from "@/lib/arquitectura";
 import { parseConsorcio, type ConsorcioPage } from "@/lib/consorcio";
 import { prisma } from "@/lib/prisma";
+import { PUBLIC_STATUSES_KEY, parsePublicStatuses } from "@/lib/estate/listing-status";
 import { DEFAULT_MAP_PIN_BG_COLOR, DEFAULT_MAP_PIN_BORDER_COLOR } from "@/components/estate/map-pin-svg";
 import { WHATSAPP_TEMPLATE_IDS, WHATSAPP_TEMPLATES, type WhatsappTemplates } from "@/lib/whatsapp-templates";
 
@@ -61,6 +62,9 @@ export type StoreSettings = {
   // PROPERTY_TYPE_ICONS), elegido en Categorías. Los que no tienen ícono
   // elegido no están: se usa el sugerido por el nombre.
   propertyTypeIcons: Record<string, string>;
+  // Estados de oferta visibles en el sitio: siempre AVAILABLE, más los que
+  // se prendan en Configuración → Publicaciones (ver listing-status.ts).
+  publicStatuses: string[];
 };
 
 export type MapPinSettings = {
@@ -132,6 +136,7 @@ const SETTINGS_KEYS = [
   "map_pin_border_color",
   "map_pin_bg_color",
   "map_pin_image_url",
+  PUBLIC_STATUSES_KEY,
 ] as const;
 
 function parseArqConfig(value: string | undefined): ArqConfig {
@@ -209,6 +214,7 @@ export const getStoreSettings = cache(
         bgColor: map.map_pin_bg_color || DEFAULT_MAP_PIN_BG_COLOR,
         imageUrl: map.map_pin_image_url || null,
       },
+      publicStatuses: parsePublicStatuses(map[PUBLIC_STATUSES_KEY]),
       propertyTypeIcons: Object.fromEntries(propertyTypes.map((t) => [t.name, t.icon as string])),
     };
   },

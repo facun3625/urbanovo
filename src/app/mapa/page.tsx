@@ -1,3 +1,4 @@
+import { getStoreSettings } from "@/lib/settings";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { MapPin, MapPinOff } from "lucide-react";
@@ -29,10 +30,11 @@ export default async function MapaPage({
   if (!tenant) notFound();
   const search = await searchParams;
 
-  const [enabledFilters, filterOptions, filterLabels] = await Promise.all([
+  const [enabledFilters, filterOptions, filterLabels, { publicStatuses: statuses }] = await Promise.all([
     getPublicCatalogFilters(tenant.id),
     estatePropertyFilterOptions(tenant.id, { publishedOnly: true }),
     getCatalogFilterLabels(tenant.id),
+    getStoreSettings(tenant.id),
   ]);
   const filters = parseCatalogFilters(search, enabledFilters, {
     propertyTypes: filterOptions.propertyTypes,
@@ -47,7 +49,7 @@ export default async function MapaPage({
   const mapFilters = { ...filters, city: selectedCity };
   const cityRows = await prisma.estateProperty.findMany({
     where: {
-      ...buildPublishedPropertyWhere(tenant.id, { ...filters, city: undefined }),
+      ...buildPublishedPropertyWhere(tenant.id, { ...filters, city: undefined }, statuses),
       latitude: { not: null },
       longitude: { not: null },
     },
@@ -67,7 +69,7 @@ export default async function MapaPage({
   };
 
   const properties = await prisma.estateProperty.findMany({
-    where: buildPublishedPropertyWhere(tenant.id, mapFilters),
+    where: buildPublishedPropertyWhere(tenant.id, mapFilters, statuses),
     select: {
       id: true,
       title: true,
@@ -77,7 +79,7 @@ export default async function MapaPage({
       longitude: true,
       media: { orderBy: { position: "asc" }, take: 1 },
       listings: {
-        where: { status: "AVAILABLE", ...listingOperationWhere(filters.operation) },
+        where: { status: { in: statuses }, ...listingOperationWhere(filters.operation) },
       },
     },
     orderBy: [{ featured: "desc" }, { featuredOrder: "asc" }, { createdAt: "desc" }],

@@ -24,7 +24,7 @@ export default async function FavoritosPage() {
           property: {
             include: {
               media: { orderBy: { position: "asc" }, take: 1 },
-              listings: { where: { status: "AVAILABLE" } },
+              listings: { where: { status: { in: storeSettings.publicStatuses } } },
             },
           },
         },

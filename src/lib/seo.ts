@@ -2,7 +2,7 @@ import { SITE_URL, absoluteUrl } from "@/lib/site-url";
 import type { StoreSettings } from "@/lib/settings";
 import { toFacebookLink, toInstagramLink, toYoutubeLink } from "@/lib/social-links";
 
-type Listing = { operation: string; price: { toString(): string } | null; currency: string; showPrice: boolean; temporary: boolean };
+type Listing = { operation: string; price: { toString(): string } | null; currency: string; showPrice: boolean; temporary: boolean; status?: string };
 
 export type SeoProperty = {
   id: string;
@@ -98,7 +98,8 @@ const SCHEMA_TYPE: Record<string, string> = {
 
 export function propertyJsonLd(p: SeoProperty, store: StoreSettings) {
   const url = absoluteUrl(`/propiedades/${p.id}`);
-  const offers = p.listings.map((l) => ({
+  // Las vendidas/alquiladas que se muestran en el sitio no son ofertas vigentes.
+  const offers = p.listings.filter((l) => !l.status || l.status === "AVAILABLE" || l.status === "RESERVED").map((l) => ({
     "@type": "Offer",
     url,
     businessFunction: l.operation === "SALE" ? "http://purl.org/goodrelations/v1#Sell" : "http://purl.org/goodrelations/v1#LeaseOut",

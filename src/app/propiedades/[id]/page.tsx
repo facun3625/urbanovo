@@ -4,6 +4,7 @@ import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import { BadgeCheck, Bath, BedDouble, CarFront, Compass, MapPin, MessageCircle, PawPrint, Pencil, Scan, WavesLadder, type LucideIcon } from "lucide-react";
 import { PropertyTypeIcon } from "@/components/estate/property-type-icon";
+import { STATUS_BADGE, isClosedStatus } from "@/lib/estate/listing-status";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
 import { getCurrentTenant } from "@/lib/tenant";
@@ -26,16 +27,17 @@ import { jsonLdScript, propertyJsonLd, propertySeoDescription, propertySeoTitle,
 async function getProperty(id: string) {
   const tenant = await getCurrentTenant();
   if (!tenant) notFound();
+  const { publicStatuses: statuses } = await getStoreSettings(tenant.id);
   const property = await prisma.estateProperty.findFirst({
     where: {
       id,
       tenantId: tenant.id,
       published: true,
-      listings: { some: { status: "AVAILABLE" } },
+      listings: { some: { status: { in: statuses } } },
     },
     include: {
       media: { orderBy: { position: "asc" } },
-      listings: { where: { status: "AVAILABLE" } },
+      listings: { where: { status: { in: statuses } } },
       development: { select: { name: true } },
     },
   });
@@ -84,6 +86,7 @@ export default async function PropertyPage({
   const session = await auth();
   const canEdit =
     session?.user.role === "ADMIN" && session.user.tenantId === p.tenantId;
+  const { publicStatuses: statuses } = await getStoreSettings(p.tenantId);
   const [favorited, related, storeSettings, hdrs] = await Promise.all([
     session?.user
       ? prisma.estatePropertyFavorite
@@ -99,12 +102,12 @@ export default async function PropertyPage({
         tenantId: p.tenantId,
         id: { not: p.id },
         published: true,
-        listings: { some: { status: "AVAILABLE" } },
+        listings: { some: { status: { in: statuses } } },
         OR: [{ city: p.city }, { propertyType: p.propertyType }],
       },
       include: {
         media: { orderBy: { position: "asc" }, take: 1 },
-        listings: { where: { status: "AVAILABLE" } },
+        listings: { where: { status: { in: statuses } } },
       },
       orderBy: [{ featured: "desc" }, { createdAt: "desc" }],
       take: 4,
@@ -127,7 +130,7 @@ export default async function PropertyPage({
   const shareUrl = `${protocol}://${host}/propiedades/${p.id}`;
   // Sin precio publicado no hay contra qué avisar una baja.
   const priceAlertOffers = p.listings
-    .filter((l) => l.showPrice && l.price && Number(l.price) > 0)
+    .filter((l) => l.status === "AVAILABLE" && l.showPrice && l.price && Number(l.price) > 0)
     .map((l) => ({
       operation: l.operation,
       label: `${l.temporary ? "Alquiler temporario" : labels[l.operation]}: ${money(l.price!, l.currency)}`,
@@ -262,15 +265,22 @@ export default async function PropertyPage({
               <div className="mb-6 space-y-4">
                 {p.listings.map((l) => (
                   <div key={l.id}>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="flex items-center gap-2 text-sm text-muted-foreground">
                       {l.temporary ? "Alquiler temporario" : labels[l.operation]}
+                      {STATUS_BADGE[l.status] && (
+                        <span className="rounded-full bg-neutral-900/85 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-white">
+                          {STATUS_BADGE[l.status]}
+                        </span>
+                      )}
                     </p>
                     <p className="text-2xl font-semibold">
-                      {l.price && l.showPrice
-                        ? money(l.price, l.currency)
-                        : "Consultar precio"}
+                      {isClosedStatus(l.status)
+                        ? STATUS_BADGE[l.status]
+                        : l.price && l.showPrice
+                          ? money(l.price, l.currency)
+                          : "Consultar precio"}
                     </p>
-                    {l.operation === "RENT" && l.price && l.showPrice && (
+                    {!isClosedStatus(l.status) && l.operation === "RENT" && l.price && l.showPrice && (
                       <p className="text-xs text-muted-foreground">
                         {l.temporary ? "Importe por día" : "Importe mensual"}
                       </p>

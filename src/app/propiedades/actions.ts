@@ -1,4 +1,5 @@
 "use server";
+import { getStoreSettings } from "@/lib/settings";
 import { headers } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
@@ -34,7 +35,7 @@ export async function inquireProperty(form: FormData) {
             id: data.propertyId,
             tenantId: tenant.id,
             published: true,
-            listings: { some: { status: "AVAILABLE" } },
+            listings: { some: { status: { in: (await getStoreSettings(tenant.id)).publicStatuses } } },
           },
         }))
       )
@@ -74,7 +75,7 @@ export async function getFavoritePropertiesByIds(ids: string[]) {
     where: { id: { in: ids.slice(0, 200) }, tenantId: tenant.id, published: true },
     include: {
       media: { orderBy: { position: "asc" }, take: 1 },
-      listings: { where: { status: "AVAILABLE" } },
+      listings: { where: { status: { in: (await getStoreSettings(tenant.id)).publicStatuses } } },
     },
     orderBy: { createdAt: "desc" },
   });

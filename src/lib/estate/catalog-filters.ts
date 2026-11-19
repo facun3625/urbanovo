@@ -102,12 +102,13 @@ export function parseCatalogFilters(
 export function buildPublishedPropertyWhere(
   tenantId: string,
   filters: ParsedCatalogFilters,
+  statuses: string[],
 ): Prisma.EstatePropertyWhereInput {
   return {
     tenantId,
     published: true,
     listings: {
-      some: { status: "AVAILABLE", ...listingOperationWhere(filters.operation) },
+      some: { status: { in: statuses }, ...listingOperationWhere(filters.operation) },
     },
     ...(filters.propertyType ? { propertyType: filters.propertyType } : {}),
     ...(filters.city ? { city: filters.city } : {}),

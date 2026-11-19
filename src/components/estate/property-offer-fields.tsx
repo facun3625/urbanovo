@@ -51,6 +51,36 @@ export function PropertyOfferTypeSelect({
   );
 }
 
+// Estado de la oferta. Lo cambian también las Negociaciones al reservar o
+// cerrar; acá se puede ajustar a mano. Si no es "Disponible", el sitio la
+// muestra solo cuando ese estado está prendido en Configuración →
+// Publicaciones.
+function OfferStatusSelect({
+  name,
+  defaultValue,
+  options,
+}: {
+  name: string;
+  defaultValue: string;
+  options: [string, string][];
+}) {
+  // Si el estado guardado no es de esta oferta (p. ej. venta "Alquilada"),
+  // queda como Disponible.
+  const value = options.some(([v]) => v === defaultValue) ? defaultValue : "AVAILABLE";
+  return (
+    <label className="flex items-center gap-2 text-sm">
+      <span className="text-muted-foreground">Estado</span>
+      <StyledSelect name={name} defaultValue={value} aria-label="Estado de la oferta">
+        {options.map(([v, label]) => (
+          <option key={v} value={v}>
+            {label}
+          </option>
+        ))}
+      </StyledSelect>
+    </label>
+  );
+}
+
 export function PropertyOfferPriceFields({
   offerType,
   agents,
@@ -62,6 +92,8 @@ export function PropertyOfferPriceFields({
   defaultRentCurrency,
   defaultRentWhatsapp,
   defaultRentShowPrice,
+  defaultSaleStatus,
+  defaultRentStatus,
   onDirty,
 }: {
   offerType: OfferType;
@@ -74,6 +106,8 @@ export function PropertyOfferPriceFields({
   defaultRentCurrency: string;
   defaultRentWhatsapp: string;
   defaultRentShowPrice: boolean;
+  defaultSaleStatus: string;
+  defaultRentStatus: string;
   onDirty: () => void;
 }) {
   const showSale = offerType === "SALE" || offerType === "BOTH";
@@ -83,7 +117,14 @@ export function PropertyOfferPriceFields({
   return (
     <div className={`grid gap-4 ${showSale && showRent ? "sm:grid-cols-2" : ""}`}>
       <div className={showSale ? "space-y-4 rounded-xl border p-4" : "hidden"}>
-        <p className="text-sm font-semibold">Oferta de venta</p>
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <p className="text-sm font-semibold">Oferta de venta</p>
+          <OfferStatusSelect
+            name="saleStatus"
+            defaultValue={defaultSaleStatus}
+            options={[["AVAILABLE", "Disponible"], ["RESERVED", "Reservada"], ["SOLD", "Vendida"]]}
+          />
+        </div>
         <div className="grid gap-4 sm:grid-cols-3">
           <div>
             <label htmlFor="salePrice" className="mb-1.5 block text-sm font-medium">
@@ -137,7 +178,14 @@ export function PropertyOfferPriceFields({
         </p>
       </div>
       <div className={showRent ? "space-y-4 rounded-xl border p-4" : "hidden"}>
-        <p className="text-sm font-semibold">Oferta de alquiler</p>
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <p className="text-sm font-semibold">Oferta de alquiler</p>
+          <OfferStatusSelect
+            name="rentStatus"
+            defaultValue={defaultRentStatus}
+            options={[["AVAILABLE", "Disponible"], ["RESERVED", "Reservada"], ["RENTED", "Alquilada"]]}
+          />
+        </div>
         <div className="grid gap-4 sm:grid-cols-3">
           <div>
             <label htmlFor="rentPrice" className="mb-1.5 block text-sm font-medium">

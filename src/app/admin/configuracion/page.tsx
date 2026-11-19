@@ -12,6 +12,7 @@ import { SeoSettingsForm } from "./seo-settings-form";
 import { TelegramSettingsForm } from "./telegram-settings-form";
 import { MapSettingsForm } from "./map-settings-form";
 import { MapPinForm } from "./map-pin-form";
+import { PublicStatusesForm } from "./public-statuses-form";
 import { AiAssistantSettingsForm } from "./ai-assistant-settings-form";
 import { MercadoLibreSettingsForm } from "./mercadolibre-settings-form";
 import { BackupsPanel } from "./backups-panel";
@@ -22,7 +23,7 @@ import { listBackups, MAX_BACKUPS } from "@/lib/backup";
 import { WhatsappTemplatesForm } from "./whatsapp-templates-form";
 import { getWhatsappTemplates } from "@/lib/settings";
 
-const VALID_TABS = new Set(["mantenimiento", "popup", "seo", "mapas", "telegram", "ia", "mercadolibre", "correo", "whatsapp", "backups"]);
+const VALID_TABS = new Set(["mantenimiento", "publicaciones", "popup", "seo", "mapas", "telegram", "ia", "mercadolibre", "correo", "whatsapp", "backups"]);
 
 const backupDate = new Intl.DateTimeFormat("es-AR", {
   dateStyle: "full",
@@ -74,6 +75,9 @@ export default async function ConfiguracionPage({
           <TabsTrigger value="mantenimiento" className="flex-1">
             Mantenimiento
           </TabsTrigger>
+          <TabsTrigger value="publicaciones" className="flex-1">
+            Publicaciones
+          </TabsTrigger>
           <TabsTrigger value="popup" className="flex-1">
             Pop-up
           </TabsTrigger>
@@ -107,6 +111,13 @@ export default async function ConfiguracionPage({
 
         <TabsContent value="mantenimiento">
           <MaintenanceForm key={JSON.stringify(maintenanceConfig)} config={maintenanceConfig} />
+        </TabsContent>
+
+        <TabsContent value="publicaciones">
+          <PublicStatusesForm
+            key={settings.publicStatuses.join(",")}
+            statuses={settings.publicStatuses.filter((s) => s !== "AVAILABLE")}
+          />
         </TabsContent>
 
         <TabsContent value="popup">

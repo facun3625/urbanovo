@@ -1,3 +1,4 @@
+import { getStoreSettings } from "@/lib/settings";
 import { NextRequest, NextResponse } from "next/server";
 
 import { prisma } from "@/lib/prisma";
@@ -19,8 +20,9 @@ export async function GET(request: NextRequest) {
   const tenant = await getCurrentTenant();
   if (!tenant || query.length < 2) return NextResponse.json({ groups: [] });
 
+  const { publicStatuses: statuses } = await getStoreSettings(tenant.id);
   const properties = await prisma.estateProperty.findMany({
-    where: { tenantId: tenant.id, published: true, listings: { some: { status: "AVAILABLE" } } },
+    where: { tenantId: tenant.id, published: true, listings: { some: { status: { in: statuses } } } },
     select: {
       id: true,
       title: true,
@@ -29,7 +31,7 @@ export async function GET(request: NextRequest) {
       neighborhood: true,
       propertyType: true,
       media: { orderBy: { position: "asc" }, take: 1, select: { url: true } },
-      listings: { where: { status: "AVAILABLE" }, select: { price: true, currency: true, showPrice: true } },
+      listings: { where: { status: { in: statuses } }, select: { price: true, currency: true, showPrice: true, status: true } },
     },
     orderBy: [{ featured: "desc" }, { createdAt: "desc" }],
     take: 1000,

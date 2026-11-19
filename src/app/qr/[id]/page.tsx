@@ -43,7 +43,7 @@ export default async function QrPage({ params }: { params: Promise<{ id: string 
       city: true,
       neighborhood: true,
       published: true,
-      listings: { where: { status: "AVAILABLE" }, select: { id: true } },
+      listings: { where: { status: { in: (await getStoreSettings(tenant.id)).publicStatuses } }, select: { id: true } },
       media: { orderBy: { position: "asc" }, take: 1, select: { url: true } },
     },
   });

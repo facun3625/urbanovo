@@ -47,7 +47,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   const [properties, developments] = await Promise.all([
     prisma.estateProperty.findMany({
-      where: { tenantId: tenant.id, published: true, listings: { some: { status: "AVAILABLE" } } },
+      where: { tenantId: tenant.id, published: true, listings: { some: { status: { in: (await getStoreSettings(tenant.id)).publicStatuses } } } },
       select: { id: true, updatedAt: true, media: { orderBy: { position: "asc" }, take: 5, select: { url: true } } },
       orderBy: { updatedAt: "desc" },
     }),

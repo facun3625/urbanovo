@@ -256,6 +256,8 @@ export function RecordForm({
                   defaultRentCurrency={values.rentCurrency ? String(values.rentCurrency) : "ARS"}
                   defaultRentWhatsapp={values.rentWhatsapp ? String(values.rentWhatsapp) : ""}
                   defaultRentShowPrice={values.rentShowPrice !== false}
+                  defaultSaleStatus={values.saleStatus ? String(values.saleStatus) : "AVAILABLE"}
+                  defaultRentStatus={values.rentStatus ? String(values.rentStatus) : "AVAILABLE"}
                   onDirty={markDirty}
                 />
               ) : isLateFeeCluster ? (

@@ -6,6 +6,7 @@ import { money, labels } from "@/lib/estate/modules";
 import { contrastText } from "@/lib/contrast-color";
 import { FavoriteButton } from "./favorite-button";
 import { PropertyTypeIcon } from "./property-type-icon";
+import { STATUS_BADGE, isClosedStatus } from "@/lib/estate/listing-status";
 
 // Mismo valor por defecto que DEFAULT_BADGE_COLOR en @/lib/settings — no se
 // importa de ahí para no arrastrar "@/lib/prisma" al bundle del cliente
@@ -32,6 +33,8 @@ export type CardProperty = {
     currency: string;
     temporary: boolean;
     showPrice: boolean;
+    // Solo cuando en Configuración se muestran reservadas/alquiladas/vendidas.
+    status?: string;
   }[];
 };
 
@@ -64,15 +67,24 @@ export function PropertyCard({
           </div>
         )}
         <div className="absolute left-3 top-3 flex gap-1.5">
-          {p.listings.map((l) => (
-            <span
-              key={l.id}
-              className="rounded-full px-2.5 py-1 text-[11px] font-semibold shadow-sm"
-              style={{ backgroundColor: badgeColor, color: contrastText(badgeColor) }}
-            >
-              {l.temporary ? "Alquiler temporario" : labels[l.operation]}
-            </span>
-          ))}
+          {p.listings.map((l) =>
+            l.status && STATUS_BADGE[l.status] ? (
+              <span
+                key={l.id}
+                className="rounded-full bg-neutral-900/85 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-white shadow-sm"
+              >
+                {STATUS_BADGE[l.status]}
+              </span>
+            ) : (
+              <span
+                key={l.id}
+                className="rounded-full px-2.5 py-1 text-[11px] font-semibold shadow-sm"
+                style={{ backgroundColor: badgeColor, color: contrastText(badgeColor) }}
+              >
+                {l.temporary ? "Alquiler temporario" : labels[l.operation]}
+              </span>
+            ),
+          )}
         </div>
         <FavoriteButton
           propertyId={p.id}
@@ -124,8 +136,10 @@ export function PropertyCard({
           <p className="font-semibold">
             {p.listings.map((l) => (
               <span key={l.id} className="block">
-                {l.price && l.showPrice ? money(l.price, l.currency) : "Consultar precio"}
-                {l.operation === "RENT" && l.price && l.showPrice
+                {isClosedStatus(l.status) ? (
+                  <span className="text-muted-foreground">{STATUS_BADGE[l.status!]}</span>
+                ) : l.price && l.showPrice ? money(l.price, l.currency) : "Consultar precio"}
+                {!isClosedStatus(l.status) && l.operation === "RENT" && l.price && l.showPrice
                   ? l.temporary
                     ? " / día"
                     : " / mes"

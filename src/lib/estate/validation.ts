@@ -162,6 +162,8 @@ export const propertySchema = z
     rentCurrency: currency,
     rentWhatsapp: optionalPhone,
     rentShowPrice: z.boolean(),
+    saleStatus: z.enum(["AVAILABLE", "RESERVED", "SOLD"]).default("AVAILABLE"),
+    rentStatus: z.enum(["AVAILABLE", "RESERVED", "RENTED"]).default("AVAILABLE"),
   })
   .refine(
     (v) =>

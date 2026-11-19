@@ -236,10 +236,12 @@ export async function estateRows(
             saleCurrency: sale?.currency ?? "USD",
             saleWhatsapp: sale?.whatsapp ?? "",
             saleShowPrice: sale?.showPrice ?? true,
+            saleStatus: sale?.status ?? "AVAILABLE",
             rentPrice: rent?.price?.toString() ?? "",
             rentCurrency: rent?.currency ?? "ARS",
             rentWhatsapp: rent?.whatsapp ?? "",
             rentShowPrice: rent?.showPrice ?? true,
+            rentStatus: rent?.status ?? "AVAILABLE",
           };
         })(),
       }));

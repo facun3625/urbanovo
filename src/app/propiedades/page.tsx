@@ -46,14 +46,14 @@ export default async function PropiedadesPage({
   });
   const hasFilters = Object.values(filters).some((value) => value !== undefined && value !== "");
   const session = await auth();
-  const propertyWhere = buildPublishedPropertyWhere(tenant.id, filters);
+  const propertyWhere = buildPublishedPropertyWhere(tenant.id, filters, storeSettings.publicStatuses);
   const [properties, totalCount, favoriteIds] = await Promise.all([
     prisma.estateProperty.findMany({
       where: propertyWhere,
       include: {
         media: { orderBy: { position: "asc" }, take: 1 },
         listings: {
-          where: { status: "AVAILABLE", ...listingOperationWhere(filters.operation) },
+          where: { status: { in: storeSettings.publicStatuses }, ...listingOperationWhere(filters.operation) },
         },
       },
       orderBy: [{ featured: "desc" }, { featuredOrder: "asc" }, { createdAt: "desc" }],

@@ -7,10 +7,10 @@ const catalogs = { propertyTypes: [], cities: [], neighborhoods: [] };
 
 test("feature filters combine with tenant and publication scope, including explicit no", () => {
   const parsed = parseCatalogFilters({ orientation: "Norte", petsPolicy: "No permitidas", creditEligible: "false" }, CATALOG_FILTER_KEYS, catalogs);
-  const where = buildPublishedPropertyWhere("tenant-a", parsed);
+  const where = buildPublishedPropertyWhere("tenant-a", parsed, ["AVAILABLE"]);
   assert.equal(where.tenantId, "tenant-a");
   assert.equal(where.published, true);
-  assert.deepEqual(where.listings, { some: { status: "AVAILABLE" } });
+  assert.deepEqual(where.listings, { some: { status: { in: ["AVAILABLE"] } } });
   assert.equal(where.orientation, "Norte");
   assert.equal(where.petsPolicy, "No permitidas");
   assert.equal(where.creditEligible, false);
@@ -22,7 +22,7 @@ test("disabled, empty and invalid filters do not exclude properties with unspeci
     parseCatalogFilters({ orientation: "invalid", petsPolicy: "invalid", creditEligible: "invalid" }, CATALOG_FILTER_KEYS, catalogs),
     parseCatalogFilters({}, CATALOG_FILTER_KEYS, catalogs),
   ]) {
-    const where = buildPublishedPropertyWhere("tenant-a", parsed);
+    const where = buildPublishedPropertyWhere("tenant-a", parsed, ["AVAILABLE"]);
     assert.equal("orientation" in where, false);
     assert.equal("petsPolicy" in where, false);
     assert.equal("creditEligible" in where, false);
@@ -31,7 +31,7 @@ test("disabled, empty and invalid filters do not exclude properties with unspeci
 
 const property = {
   code: "A", title: "Casa", propertyType: "Casa", city: "Córdoba", neighborhood: "", address: "Privada",
-  ownerId: "", bedrooms: 2, bathrooms: 1, garages: 0, coveredArea: "80", totalArea: "100",
+  ownerId: "", bedrooms: 2, bathrooms: 1, garages: 0, pool: false, coveredArea: "80", totalArea: "100", mapAddress: "",
   description: "", latitude: "", longitude: "", videoUrl: "", published: true, featured: false,
   offerType: "SALE", salePrice: "", saleCurrency: "USD", saleWhatsapp: "", saleShowPrice: true,
   rentPrice: "", rentCurrency: "ARS", rentWhatsapp: "", rentShowPrice: true,

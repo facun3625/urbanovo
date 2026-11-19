@@ -27,15 +27,16 @@ export async function EstateCatalog({ tenantId }: { tenantId: string }) {
     getCatalogFilterLabels(tenantId),
     estatePropertyFilterOptions(tenantId, { publishedOnly: true }),
     getStoreSettings(tenantId),
-    prisma.estateProperty.findMany({
-      where: { tenantId, published: true, listings: { some: { status: "AVAILABLE" } } },
+    getStoreSettings(tenantId).then(({ publicStatuses: statuses }) =>
+      prisma.estateProperty.findMany({
+      where: { tenantId, published: true, listings: { some: { status: { in: statuses } } } },
       include: {
         media: { orderBy: { position: "asc" }, take: 1 },
-        listings: { where: { status: "AVAILABLE" } },
+        listings: { where: { status: { in: statuses } } },
       },
       orderBy: [{ featured: "desc" }, { featuredOrder: "asc" }, { createdAt: "desc" }],
       take: FEATURED_TAKE,
-    }),
+    })),
     session?.user
       ? prisma.estatePropertyFavorite.findMany({
           where: { tenantId, userId: session.user.id },

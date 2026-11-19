@@ -9,6 +9,7 @@ import { requireTenantAdmin } from "@/lib/require-admin";
 import { logActivity } from "@/lib/activity-log";
 import { saveUploadedFile } from "@/lib/storage";
 import { saveTextSetting, saveImageSetting } from "@/lib/settings-storage";
+import { OPTIONAL_PUBLIC_STATUSES, PUBLIC_STATUSES_KEY } from "@/lib/estate/listing-status";
 import { getTelegramSettings } from "@/lib/settings";
 import { sendTelegram } from "@/lib/telegram";
 import { DEFAULT_AI_MODELS } from "@/lib/ai-agent/types";
@@ -387,4 +388,24 @@ async function runUpdateMapPin(formData: FormData) {
   revalidatePath("/", "layout");
   await logActivity(tenant.id, { entity: "configuracion", action: "UPDATE", summary: "Cambió el pin de los mapas" });
   return { ok: true as const };
+}
+
+// ---------- Publicaciones: qué estados se ven en el sitio ----------
+
+export async function updatePublicStatuses(statuses: string[]) {
+  try {
+    const { tenant } = await requireTenantAdmin();
+    const allowed = new Set<string>(OPTIONAL_PUBLIC_STATUSES.map((s) => s.value));
+    const value = statuses.filter((s) => allowed.has(s)).join(",");
+    await saveTextSetting(tenant.id, value, PUBLIC_STATUSES_KEY);
+    revalidatePath("/", "layout");
+    await logActivity(tenant.id, {
+      entity: "configuracion",
+      action: "UPDATE",
+      summary: "Cambió qué publicaciones se ven en el sitio",
+    });
+    return { ok: true as const };
+  } catch (err) {
+    return toUserError(err, "No se pudo guardar la configuración");
+  }
 }
