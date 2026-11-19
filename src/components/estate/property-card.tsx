@@ -66,9 +66,9 @@ export function PropertyCard({
             <Building2 className="size-10" />
           </div>
         )}
-        <div className="absolute left-3 top-3 flex gap-1.5">
+        <div className="absolute left-3 top-3 flex items-center gap-1.5">
           <span
-            className="flex aspect-square items-center justify-center self-stretch rounded-full shadow-sm"
+            className="flex size-7 shrink-0 items-center justify-center rounded-full shadow-[0_4px_12px_-4px_rgba(0,0,0,0.45)] ring-2 ring-white/85"
             style={{ backgroundColor: badgeColor, color: contrastText(badgeColor) }}
             title={p.propertyType}
           >
@@ -78,14 +78,14 @@ export function PropertyCard({
             l.status && STATUS_BADGE[l.status] ? (
               <span
                 key={l.id}
-                className="rounded-full bg-neutral-900/85 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-white shadow-sm"
+                className="inline-flex h-7 items-center rounded-full bg-neutral-900/85 px-3 text-[11px] font-semibold uppercase tracking-wide text-white shadow-sm"
               >
                 {STATUS_BADGE[l.status]}
               </span>
             ) : (
               <span
                 key={l.id}
-                className="rounded-full px-2.5 py-1 text-[11px] font-semibold shadow-sm"
+                className="inline-flex h-7 items-center rounded-full px-3 text-[11px] font-semibold shadow-sm"
                 style={{ backgroundColor: badgeColor, color: contrastText(badgeColor) }}
               >
                 {l.temporary ? "Alquiler temporario" : labels[l.operation]}
