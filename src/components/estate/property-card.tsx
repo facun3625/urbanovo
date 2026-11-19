@@ -67,6 +67,13 @@ export function PropertyCard({
           </div>
         )}
         <div className="absolute left-3 top-3 flex gap-1.5">
+          <span
+            className="flex aspect-square items-center justify-center self-stretch rounded-full shadow-sm"
+            style={{ backgroundColor: badgeColor, color: contrastText(badgeColor) }}
+            title={p.propertyType}
+          >
+            <PropertyTypeIcon type={p.propertyType} className="size-3.5" />
+          </span>
           {p.listings.map((l) =>
             l.status && STATUS_BADGE[l.status] ? (
               <span
@@ -93,8 +100,7 @@ export function PropertyCard({
         />
       </div>
       <div className="estate-property-card-body flex flex-1 flex-col p-4 sm:p-5">
-        <p className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-          <PropertyTypeIcon type={p.propertyType} className="size-3.5 shrink-0" />
+        <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
           {p.propertyType}
         </p>
         <h3 className="mt-1.5 line-clamp-2 min-h-12 text-base font-semibold leading-6 transition-colors duration-300 ease-out group-hover:text-primary">{p.title}</h3>
