@@ -38,6 +38,7 @@ export function MercadoLibreSettingsForm({
   configured,
   connected,
   userId,
+  accountName,
   redirectUri,
   mlError,
   locationRows,
@@ -46,6 +47,7 @@ export function MercadoLibreSettingsForm({
   configured: boolean;
   connected: boolean;
   userId: string | null;
+  accountName: string | null;
   redirectUri: string;
   mlError: string | null;
   locationRows: LocationRow[];
@@ -144,7 +146,7 @@ export function MercadoLibreSettingsForm({
           {connected && (
             <>
               <span className="text-sm text-muted-foreground">
-                Conectado {userId ? `(cuenta ${userId})` : ""}
+                Conectado{accountName ? ` como ${accountName}` : ""} {userId ? `(cuenta ${userId})` : ""}
               </span>
               <Button
                 type="button"

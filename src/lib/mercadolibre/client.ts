@@ -53,3 +53,20 @@ export async function mlFetch<T>(tenantId: string, path: string, options: Reques
   }
   return json as T;
 }
+
+// Nombre de la cuenta conectada, para que en el admin se vea con qué cuenta
+// se publica (el número solo no dice nada). Null si no se pudo consultar.
+export async function getConnectedAccountName(tenantId: string): Promise<string | null> {
+  try {
+    const me = await mlFetch<{ nickname?: string; company?: { brand_name?: string; corporate_name?: string } | null; email?: string }>(
+      tenantId,
+      "/users/me",
+    );
+    const company = me.company?.corporate_name || me.company?.brand_name;
+    return [company, me.nickname && me.nickname !== company ? me.nickname : null, me.email ? `(${me.email})` : null]
+      .filter(Boolean)
+      .join(" · ") || null;
+  } catch {
+    return null;
+  }
+}

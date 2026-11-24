@@ -5,6 +5,7 @@ import { MaintenanceForm } from "./maintenance-form";
 import { requireTenantAdmin } from "@/lib/require-admin";
 import { prisma } from "@/lib/prisma";
 import { getMercadoLibreSettings } from "@/lib/mercadolibre/settings";
+import { getConnectedAccountName } from "@/lib/mercadolibre/client";
 import { mercadoLibreRedirectUri } from "@/lib/mercadolibre/auth";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PopupForm } from "./popup-form";
@@ -157,6 +158,7 @@ export default async function ConfiguracionPage({
             configured={mlSettings.configured}
             connected={mlSettings.connected}
             userId={mlSettings.userId}
+            accountName={mlSettings.connected ? await getConnectedAccountName(tenant.id) : null}
             redirectUri={mercadoLibreRedirectUri()}
             mlError={mlError ?? null}
             locationRows={mlLocationRows}
