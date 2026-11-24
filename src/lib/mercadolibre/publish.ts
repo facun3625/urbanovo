@@ -54,7 +54,14 @@ function locationLabel(property: PropertyForMl) {
 async function availableListingTypes(tenantId: string, userId: string | null, categoryId: string): Promise<MlListingType[]> {
   if (!userId) return [];
   try {
-    return await mlFetch<MlListingType[]>(tenantId, `/users/${userId}/available_listing_types?category_id=${categoryId}`);
+    // Con category_id, ML devuelve { category_id, available: [...] }; sin
+    // él, la lista sola. Aceptamos las dos formas.
+    const response = await mlFetch<MlListingType[] | { available?: MlListingType[] }>(
+      tenantId,
+      `/users/${userId}/available_listing_types?category_id=${categoryId}`,
+    );
+    const list = Array.isArray(response) ? response : response?.available;
+    return Array.isArray(list) ? list : [];
   } catch {
     return [];
   }
