@@ -10,8 +10,14 @@ const PROTOCOL = ROOT_DOMAIN.startsWith("localhost") ? "http" : "https";
 const AUTH_BASE_URL = "https://auth.mercadolibre.com.ar/authorization";
 const TOKEN_URL = "https://api.mercadolibre.com/oauth/token";
 
+// Dirección pública del sitio. No sale del request: detrás de nginx la app
+// ve su dirección interna (http://localhost:3022) y mandaría al usuario ahí.
+export function publicOrigin(): string {
+  return `${PROTOCOL}://${ROOT_DOMAIN}`;
+}
+
 export function mercadoLibreRedirectUri(): string {
-  return `${PROTOCOL}://${ROOT_DOMAIN}/api/mercadolibre/oauth/callback`;
+  return `${publicOrigin()}/api/mercadolibre/oauth/callback`;
 }
 
 // `state` es un valor random que el caller genera, guarda en una cookie

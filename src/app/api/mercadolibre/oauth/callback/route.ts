@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { requireTenantAdmin } from "@/lib/require-admin";
-import { exchangeCodeForTokens } from "@/lib/mercadolibre/auth";
+import { exchangeCodeForTokens, publicOrigin } from "@/lib/mercadolibre/auth";
 
 export const dynamic = "force-dynamic";
 
@@ -9,7 +9,7 @@ const STATE_COOKIE = "ml_oauth_state";
 
 export async function GET(request: NextRequest) {
   const { tenant } = await requireTenantAdmin();
-  const redirectTo = new URL("/admin/configuracion", request.nextUrl.origin);
+  const redirectTo = new URL("/admin/configuracion", publicOrigin());
   redirectTo.searchParams.set("tab", "mercadolibre");
 
   const code = request.nextUrl.searchParams.get("code");
