@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { MapPin, Phone } from "lucide-react";
+import Image from "next/image";
+import { Building2, MapPin, Phone } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { PhotoBanner } from "@/components/catalog/photo-banner";
@@ -30,6 +31,7 @@ export default async function ConsorciosPage() {
 
   const paragraphs = page.intro.split(/\n\s*\n/).map((p) => p.trim()).filter(Boolean);
   const count = page.items.length;
+  const buildings = page.buildings.filter((b) => b.image || b.name);
 
   return (
     <div className="public-inner-page public-content-page flex flex-1 flex-col">
@@ -73,6 +75,49 @@ export default async function ConsorciosPage() {
                     </span>
                     {item.title && <h3 className="mt-4 text-base font-semibold">{item.title}</h3>}
                     {item.text && <p className="mt-1.5 text-sm text-muted-foreground">{item.text}</p>}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {buildings.length > 0 && (
+            <div>
+              {page.buildingsTitle && (
+                <h2 className="mb-10 text-center text-2xl font-semibold sm:text-3xl">{page.buildingsTitle}</h2>
+              )}
+              <div className="grid grid-cols-2 gap-4 sm:gap-5 lg:grid-cols-4">
+                {buildings.map((b, i) => (
+                  <div
+                    key={`${i}-${b.name}`}
+                    className="group overflow-hidden rounded-2xl border bg-card transition-shadow duration-200 hover:shadow-md"
+                  >
+                    <div className="relative aspect-[4/3] overflow-hidden bg-muted">
+                      {b.image ? (
+                        <Image
+                          src={b.image}
+                          alt={b.name || "Consorcio administrado"}
+                          fill
+                          sizes="(min-width: 1024px) 25vw, 50vw"
+                          className="object-cover transition-transform duration-500 group-hover:scale-105"
+                        />
+                      ) : (
+                        <span className="flex size-full items-center justify-center text-muted-foreground">
+                          <Building2 className="size-10" />
+                        </span>
+                      )}
+                    </div>
+                    {(b.name || b.address) && (
+                      <div className="p-4">
+                        {b.name && <h3 className="text-sm font-semibold sm:text-base">{b.name}</h3>}
+                        {b.address && (
+                          <p className="mt-1 flex items-start gap-1 text-xs text-muted-foreground sm:text-sm">
+                            <MapPin className="mt-0.5 size-3.5 shrink-0 text-primary" />
+                            {b.address}
+                          </p>
+                        )}
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>

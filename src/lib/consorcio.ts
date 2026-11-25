@@ -9,6 +9,7 @@ import { ABOUT_VALUE_ICONS, type AboutValueIcon } from "@/lib/about-values";
 export const CONSORCIO_KEY = "consorcio_page";
 export const CONSORCIO_PATH = "/administracion-de-consorcios";
 export const MAX_CONSORCIO_ITEMS = 12;
+export const MAX_CONSORCIO_BUILDINGS = 60;
 
 const iconKeys = ABOUT_VALUE_ICONS.map((i) => i.key) as [AboutValueIcon, ...AboutValueIcon[]];
 const text = (max: number) => z.string().trim().max(max);
@@ -24,6 +25,11 @@ export const consorcioSchema = z.object({
   items: z
     .array(z.object({ icon: z.enum(iconKeys), title: text(80), text: text(400) }))
     .max(MAX_CONSORCIO_ITEMS),
+  // Edificios / consorcios que administramos, con foto (cards abajo).
+  buildingsTitle: text(120),
+  buildings: z
+    .array(z.object({ image: text(500), name: text(100), address: text(160) }))
+    .max(MAX_CONSORCIO_BUILDINGS),
   ctaEyebrow: text(60),
   ctaTitle: text(120),
 });
@@ -69,6 +75,8 @@ export const CONSORCIO_DEFAULT: ConsorcioPage = {
       text: "Asesoramos a los propietarios para el mantenimiento de sus propiedades.",
     },
   ],
+  buildingsTitle: "Consorcios que administramos",
+  buildings: [],
   ctaEyebrow: "Hablemos",
   ctaTitle: "¿Necesitás administrar tu edificio o consorcio?",
 };

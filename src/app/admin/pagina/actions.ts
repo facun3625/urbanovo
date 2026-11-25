@@ -376,7 +376,7 @@ export async function saveConsorcio(json: string) {
       throw new ActionError("Contenido inválido");
     }
     const parsed = consorcioSchema.safeParse(raw);
-    if (!parsed.success) throw new ActionError("Revisá los textos: alguno es demasiado largo (o hay demasiados servicios).");
+    if (!parsed.success) throw new ActionError("Revisá los textos: alguno es demasiado largo (o hay demasiados servicios o consorcios).");
     const value = JSON.stringify(parsed.data);
     await prisma.settings.upsert({
       where: { tenantId_key: { tenantId: tenant.id, key: CONSORCIO_KEY } },
@@ -600,6 +600,22 @@ export async function uploadArqImage(formData: FormData) {
     if (!file.type.startsWith("image/")) throw new ActionError("El archivo debe ser una imagen");
     if (file.size > 15 * 1024 * 1024) throw new ActionError("La imagen no puede pesar más de 15 MB");
     const url = await saveUploadedFile(file, "arquitectura");
+    return { ok: true as const, url };
+  } catch (err) {
+    return toUserError(err, "No se pudo subir la imagen");
+  }
+}
+
+// Foto de un consorcio administrado; queda en uso recién cuando se guarda la
+// página con saveConsorcio.
+export async function uploadConsorcioImage(formData: FormData) {
+  try {
+    await requireTenantAdmin();
+    const file = formData.get("file");
+    if (!(file instanceof File) || file.size === 0) throw new ActionError("Elegí una imagen");
+    if (!file.type.startsWith("image/")) throw new ActionError("El archivo debe ser una imagen");
+    if (file.size > 15 * 1024 * 1024) throw new ActionError("La imagen no puede pesar más de 15 MB");
+    const url = await saveUploadedFile(file, "consorcios");
     return { ok: true as const, url };
   } catch (err) {
     return toUserError(err, "No se pudo subir la imagen");

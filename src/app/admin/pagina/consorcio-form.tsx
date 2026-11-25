@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { ArrowDown, ArrowUp, ExternalLink, Plus, Trash2 } from "lucide-react";
+import { ArrowDown, ArrowUp, ArrowLeft, ArrowRight, ExternalLink, ImagePlus, Loader2, Plus, Trash2 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -13,8 +13,8 @@ import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { AboutValueIcon } from "@/components/catalog/about-value-icon";
 import { ABOUT_VALUE_ICONS } from "@/lib/about-values";
-import { CONSORCIO_PATH, MAX_CONSORCIO_ITEMS, type ConsorcioPage } from "@/lib/consorcio";
-import { saveConsorcio } from "./actions";
+import { CONSORCIO_PATH, MAX_CONSORCIO_BUILDINGS, MAX_CONSORCIO_ITEMS, type ConsorcioPage } from "@/lib/consorcio";
+import { saveConsorcio, uploadConsorcioImage } from "./actions";
 
 function Field({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
   return (
@@ -41,6 +41,32 @@ export function ConsorcioForm({ values }: { values: ConsorcioPage }) {
       items.splice(i + dir, 0, it);
       return { ...d, items };
     });
+
+  type Building = ConsorcioPage["buildings"][number];
+  const [uploading, setUploading] = useState<number | null>(null);
+  const setBuilding = (i: number, patch: Partial<Building>) =>
+    setData((d) => ({ ...d, buildings: d.buildings.map((b, j) => (j === i ? { ...b, ...patch } : b)) }));
+  const moveBuilding = (i: number, dir: -1 | 1) =>
+    setData((d) => {
+      const buildings = d.buildings.slice();
+      const [b] = buildings.splice(i, 1);
+      buildings.splice(i + dir, 0, b);
+      return { ...d, buildings };
+    });
+
+  async function uploadPhoto(i: number, file: File | undefined) {
+    if (!file) return;
+    setUploading(i);
+    const formData = new FormData();
+    formData.set("file", file);
+    const result = await uploadConsorcioImage(formData);
+    setUploading(null);
+    if ("error" in result) {
+      toast.error(result.error);
+      return;
+    }
+    setBuilding(i, { image: result.url });
+  }
 
   function save() {
     startSaving(async () => {
@@ -153,6 +179,85 @@ export function ConsorcioForm({ values }: { values: ConsorcioPage }) {
           </Button>
         </div>
 
+        <div className="flex flex-col gap-3 border-t pt-5">
+          <div className="flex flex-col gap-1">
+            <span className="text-base font-semibold">Consorcios que administramos</span>
+            <p className="text-sm text-muted-foreground">
+              Cards con foto del edificio, abajo de los servicios (4 por línea). Sin consorcios cargados, la sección no aparece.
+            </p>
+          </div>
+          <Field label="Título de la sección" value={data.buildingsTitle} onChange={(buildingsTitle) => set({ buildingsTitle })} />
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            {data.buildings.map((b, i) => (
+              <div key={i} className="flex flex-col overflow-hidden rounded-xl border bg-muted/20">
+                <label className="relative flex aspect-[4/3] cursor-pointer items-center justify-center bg-muted text-muted-foreground hover:text-foreground">
+                  {b.image ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={b.image} alt="" className="absolute inset-0 size-full object-cover" />
+                  ) : (
+                    <span className="flex flex-col items-center gap-1 text-xs">
+                      <ImagePlus className="size-6" />
+                      Subir foto
+                    </span>
+                  )}
+                  {uploading === i && (
+                    <span className="absolute inset-0 flex items-center justify-center bg-background/70">
+                      <Loader2 className="size-6 animate-spin" />
+                    </span>
+                  )}
+                  {b.image && uploading !== i && (
+                    <span className="absolute bottom-2 right-2 rounded-md bg-background/90 px-2 py-1 text-xs font-medium text-foreground shadow">
+                      Cambiar foto
+                    </span>
+                  )}
+                  <input
+                    type="file"
+                    accept="image/png,image/jpeg,image/webp"
+                    className="hidden"
+                    disabled={uploading !== null}
+                    onChange={(e) => {
+                      void uploadPhoto(i, e.target.files?.[0]);
+                      e.target.value = "";
+                    }}
+                  />
+                </label>
+                <div className="flex flex-col gap-2 p-3">
+                  <Input placeholder="Nombre (ej. Edificio Mitre)" value={b.name} onChange={(e) => setBuilding(i, { name: e.target.value })} />
+                  <Input placeholder="Dirección" value={b.address} onChange={(e) => setBuilding(i, { address: e.target.value })} />
+                  <div className="flex justify-end gap-1">
+                    <Button type="button" variant="ghost" size="icon-sm" disabled={i === 0} onClick={() => moveBuilding(i, -1)} aria-label="Mover antes">
+                      <ArrowLeft className="size-4" />
+                    </Button>
+                    <Button type="button" variant="ghost" size="icon-sm" disabled={i === data.buildings.length - 1} onClick={() => moveBuilding(i, 1)} aria-label="Mover después">
+                      <ArrowRight className="size-4" />
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon-sm"
+                      onClick={() => set({ buildings: data.buildings.filter((_, j) => j !== i) })}
+                      aria-label="Quitar"
+                    >
+                      <Trash2 className="size-4 text-destructive" />
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="self-start"
+            disabled={data.buildings.length >= MAX_CONSORCIO_BUILDINGS}
+            onClick={() => set({ buildings: [...data.buildings, { image: "", name: "", address: "" }] })}
+          >
+            <Plus className="size-3.5" />
+            Agregar consorcio
+          </Button>
+        </div>
+
         <div className="flex flex-col gap-4 border-t pt-5">
           <div className="flex flex-col gap-1">
             <span className="text-base font-semibold">Cierre de la página</span>
@@ -167,7 +272,7 @@ export function ConsorcioForm({ values }: { values: ConsorcioPage }) {
         </div>
       </div>
 
-      <Button type="button" size="sm" onClick={save} disabled={saving} className="self-start">
+      <Button type="button" size="sm" onClick={save} disabled={saving || uploading !== null} className="self-start">
         {saving ? "Guardando..." : "Guardar"}
       </Button>
     </div>
