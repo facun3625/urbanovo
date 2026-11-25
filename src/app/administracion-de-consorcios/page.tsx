@@ -86,7 +86,7 @@ export default async function ConsorciosPage() {
               {page.buildingsTitle && (
                 <h2 className="mb-10 text-center text-2xl font-semibold sm:text-3xl">{page.buildingsTitle}</h2>
               )}
-              <div className="grid grid-cols-2 gap-4 sm:gap-5 lg:grid-cols-4">
+              <div className="grid grid-cols-2 gap-4 sm:gap-5 lg:grid-cols-3">
                 {buildings.map((b, i) => (
                   <div
                     key={`${i}-${b.name}`}
@@ -98,7 +98,7 @@ export default async function ConsorciosPage() {
                           src={b.image}
                           alt={b.name || "Consorcio administrado"}
                           fill
-                          sizes="(min-width: 1024px) 25vw, 50vw"
+                          sizes="(min-width: 1024px) 33vw, 50vw"
                           className="object-cover transition-transform duration-500 group-hover:scale-105"
                         />
                       ) : (

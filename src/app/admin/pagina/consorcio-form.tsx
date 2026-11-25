@@ -183,11 +183,11 @@ export function ConsorcioForm({ values }: { values: ConsorcioPage }) {
           <div className="flex flex-col gap-1">
             <span className="text-base font-semibold">Consorcios que administramos</span>
             <p className="text-sm text-muted-foreground">
-              Cards con foto del edificio, abajo de los servicios (4 por línea). Sin consorcios cargados, la sección no aparece.
+              Cards con foto del edificio, abajo de los servicios (3 por línea). Sin consorcios cargados, la sección no aparece.
             </p>
           </div>
           <Field label="Título de la sección" value={data.buildingsTitle} onChange={(buildingsTitle) => set({ buildingsTitle })} />
-          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
             {data.buildings.map((b, i) => (
               <div key={i} className="flex flex-col overflow-hidden rounded-xl border bg-muted/20">
                 <label className="relative flex aspect-[4/3] cursor-pointer items-center justify-center bg-muted text-muted-foreground hover:text-foreground">
