@@ -16,6 +16,7 @@ import type { Role } from "@/generated/prisma/client";
 import { UsersFilterBar } from "./users-filter-bar";
 import { UserRoleToggle, UserDeleteButton } from "./user-row-actions";
 import { CreateAdminDialog } from "./create-admin-dialog";
+import { ChangePasswordButton } from "./change-password-dialog";
 
 const dateFormatter = new Intl.DateTimeFormat("es-AR", { dateStyle: "medium" });
 const PAGE_SIZE = 30;
@@ -101,7 +102,8 @@ export default async function UsersPage({
                 <TableCell>
                   <UserRoleToggle id={u.id} role={u.role} disabled={isSelf} />
                 </TableCell>
-                <TableCell className="text-right">
+                <TableCell className="text-right whitespace-nowrap">
+                  <ChangePasswordButton id={u.id} label={u.name || u.email} />
                   <UserDeleteButton id={u.id} label={u.name || u.email} disabled={isSelf} />
                 </TableCell>
               </TableRow>

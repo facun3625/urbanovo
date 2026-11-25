@@ -7,6 +7,7 @@ import { requireTenantAdmin } from "@/lib/require-admin";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { UserRoleToggle, UserDeleteButton } from "../user-row-actions";
+import { ChangePasswordButton } from "../change-password-dialog";
 
 const dateFormatter = new Intl.DateTimeFormat("es-AR", { dateStyle: "medium" });
 
@@ -64,6 +65,7 @@ export default async function UserDetailPage({
           <UserRoleToggle id={user.id} role={user.role} disabled={isSelf} />
           <span className="font-medium">Es admin</span>
         </label>
+        <ChangePasswordButton id={user.id} label={user.name || user.email} />
         <UserDeleteButton id={user.id} label={user.name || user.email} disabled={isSelf} />
         {isSelf && (
           <span className="text-xs text-muted-foreground">

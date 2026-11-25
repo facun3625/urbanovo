@@ -105,3 +105,31 @@ async function runCreateAdmin(form: FormData) {
   revalidatePath("/admin/usuarios");
   return { ok: true as const };
 }
+
+const passwordSchema = z
+  .string()
+  .min(8, "La contraseña debe tener al menos 8 caracteres")
+  .max(72, "La contraseña es demasiado larga");
+
+// Un admin le pone una contraseña nueva a cualquier usuario (también a sí mismo).
+export async function setUserPassword(id: string, password: string) {
+  try {
+    const { session, tenant } = await requireTenantAdmin();
+    const parsed = passwordSchema.safeParse(password);
+    if (!parsed.success) throw new ActionError(parsed.error.issues[0].message);
+    const target = await prisma.user.findUnique({ where: { id, tenantId: tenant.id } });
+    if (!target) throw new ActionError("Usuario no encontrado");
+    await prisma.user.update({
+      where: { id, tenantId: tenant.id },
+      data: { passwordHash: await bcrypt.hash(parsed.data, 10) },
+    });
+    await logActivity(
+      tenant.id,
+      { entity: "usuarios", entityId: id, action: "UPDATE", summary: `Cambió la contraseña de ${target.name || target.email}` },
+      { user: session.user },
+    );
+    return { ok: true as const };
+  } catch (err) {
+    return toUserError(err, "No se pudo cambiar la contraseña");
+  }
+}
