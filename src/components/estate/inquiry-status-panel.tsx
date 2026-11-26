@@ -3,7 +3,7 @@
 import { useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { CopyIcon, MailIcon, PhoneIcon, Trash2, UserRoundIcon } from "lucide-react";
+import { CopyIcon, ExternalLinkIcon, HouseIcon, MailIcon, PhoneIcon, Trash2, UserRoundIcon } from "lucide-react";
 import { toast } from "sonner";
 
 import { useConfirm } from "@/components/admin/confirm-provider";
@@ -34,6 +34,7 @@ export function InquiryStatusPanel({
   history,
   closeHref,
   contact = null,
+  property = null,
   mailHref = null,
 }: {
   id: string;
@@ -43,6 +44,8 @@ export function InquiryStatusPanel({
   closeHref: string;
   // Datos de la persona que consultó, a mano para llamarla o escribirle.
   contact?: { id: string; name: string; email: string | null; phone: string | null } | null;
+  // Propiedad consultada: se abre en otra pestaña.
+  property?: { id: string; code: string; title: string } | null;
   // Atajo al armado de mail con el cliente (y la propiedad) ya cargados.
   mailHref?: string | null;
 }) {
@@ -122,6 +125,32 @@ export function InquiryStatusPanel({
                 <span className="flex items-center gap-1.5"><PhoneIcon className="size-3.5" />Sin teléfono</span>
               )}
             </div>
+            {property && (
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-muted-foreground">
+                <span className="flex min-w-0 items-center gap-1.5">
+                  <HouseIcon className="size-3.5 shrink-0" />
+                  <span className="truncate">
+                    {property.code} · {property.title}
+                  </span>
+                </span>
+                <a
+                  href={`/propiedades/${property.id}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="flex items-center gap-1 text-primary hover:underline"
+                >
+                  Ver en la web <ExternalLinkIcon className="size-3" />
+                </a>
+                <a
+                  href={`/admin/gestion/propiedades/${property.id}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="flex items-center gap-1 text-primary hover:underline"
+                >
+                  Ficha en el admin <ExternalLinkIcon className="size-3" />
+                </a>
+              </div>
+            )}
           </div>
           <div className="flex flex-wrap gap-2">
             {contact.phone && (
