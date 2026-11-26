@@ -13,6 +13,7 @@ import { CATALOG_FILTER_KEYS, CATALOG_FILTER_LABELS } from "@/lib/estate/catalog
 import { STORE_TEMPLATES } from "./templates";
 import { ABOUT_VALUES_KEY, aboutValuesSchema } from "@/lib/about-values";
 import { CONSORCIO_KEY, CONSORCIO_PATH, consorcioSchema } from "@/lib/consorcio";
+import { COVER_FRAME_KEY, normalizeCoverFrame } from "@/lib/cover-frame";
 import { HOME_SHORTS_KEY, homeShortsSchema, youtubeId } from "@/lib/home-shorts";
 import { ARQ_CONFIG_KEY, ARQ_ENABLED_KEY, ARQ_SETTINGS_KEY, arqConfigSchema, arqContentSchema } from "@/lib/arquitectura";
 
@@ -104,6 +105,23 @@ async function runUpdateHome(formData: FormData) {
   revalidatePath("/", "layout");
   await logActivity(tenant.id, { entity: "pagina", action: "UPDATE", summary: "Cambió la foto de portada" });
   return { ok: true as const };
+}
+
+export async function updateCoverFrame(frame: { x: number; y: number; zoom: number }) {
+  try {
+    const { tenant } = await requireTenantAdmin();
+    const value = JSON.stringify(normalizeCoverFrame(frame));
+    await prisma.settings.upsert({
+      where: { tenantId_key: { tenantId: tenant.id, key: COVER_FRAME_KEY } },
+      update: { value },
+      create: { tenantId: tenant.id, key: COVER_FRAME_KEY, value },
+    });
+    revalidatePath("/", "layout");
+    await logActivity(tenant.id, { entity: "pagina", action: "UPDATE", summary: "Ajustó el encuadre de la portada" });
+    return { ok: true as const };
+  } catch (err) {
+    return toUserError(err, "No se pudo guardar el encuadre");
+  }
 }
 
 // ---------- Datos de contacto ----------

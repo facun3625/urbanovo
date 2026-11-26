@@ -3,6 +3,9 @@
 import { useEffect, useRef } from "react";
 import Image from "next/image";
 
+import { coverFrameStyle } from "@/lib/cover-frame";
+import { useStoreSettings } from "@/lib/store-settings-context";
+
 // Portada del Inicio: video si hay uno cargado (la foto queda de imagen de
 // espera), si no la foto. Va sin sonido y en loop: los navegadores solo
 // reproducen solos los videos silenciados.
@@ -18,6 +21,7 @@ export function CoverMedia({
   className?: string;
 }) {
   const ref = useRef<HTMLVideoElement>(null);
+  const frameStyle = coverFrameStyle(useStoreSettings().coverFrame);
 
   useEffect(() => {
     const video = ref.current;
@@ -41,9 +45,10 @@ export function CoverMedia({
         preload="metadata"
         aria-hidden="true"
         className={`absolute inset-0 size-full ${className}`}
+        style={frameStyle}
       />
     );
   }
   if (!imageUrl) return null;
-  return <Image src={imageUrl} alt="" fill priority sizes={sizes} className={className} />;
+  return <Image src={imageUrl} alt="" fill priority sizes={sizes} className={className} style={frameStyle} />;
 }
