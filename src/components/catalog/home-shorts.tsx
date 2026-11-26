@@ -24,6 +24,9 @@ export async function HomeShortsSection({ tenantId }: { tenantId: string }) {
             {shorts.subtitle && <p className="mt-3 text-lg text-muted-foreground">{shorts.subtitle}</p>}
           </div>
         )}
+      </div>
+      {/* Fuera del contenedor de 1440 px: en monitores anchos entran más videos. */}
+      <div className="relative px-4 sm:px-6 lg:px-8">
         <HomeShortsCarousel ids={ids} />
       </div>
     </section>
