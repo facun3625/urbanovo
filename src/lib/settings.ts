@@ -2,7 +2,7 @@ import { cache } from "react";
 import { mergeArqConfig, type ArqConfig } from "@/lib/arquitectura";
 import { parseConsorcio, type ConsorcioPage } from "@/lib/consorcio";
 import { prisma } from "@/lib/prisma";
-import { COVER_FRAME_KEY, parseCoverFrame, type CoverFrame } from "@/lib/cover-frame";
+import { COVER_FRAME_KEY, parseCoverFrames, type CoverFrames } from "@/lib/cover-frame";
 import { PUBLIC_STATUSES_KEY, parsePublicStatuses } from "@/lib/estate/listing-status";
 import { DEFAULT_MAP_PIN_BG_COLOR, DEFAULT_MAP_PIN_BORDER_COLOR } from "@/components/estate/map-pin-svg";
 import { WHATSAPP_TEMPLATE_IDS, WHATSAPP_TEMPLATES, type WhatsappTemplates } from "@/lib/whatsapp-templates";
@@ -16,7 +16,7 @@ export type StoreSettings = {
   // queda como imagen de espera mientras carga.
   coverVideoUrl: string | null;
   // Encuadre (posición y zoom) de la portada, elegido en el panel.
-  coverFrame: CoverFrame;
+  coverFrame: CoverFrames;
   faviconUrl: string | null;
   address: string | null;
   city: string | null;
@@ -170,7 +170,7 @@ export const getStoreSettings = cache(
       footerLogoUrl: map.store_footer_logo_url || null,
       coverUrl: map.store_cover_url || null,
       coverVideoUrl: map.store_cover_video_url || null,
-      coverFrame: parseCoverFrame(map[COVER_FRAME_KEY]),
+      coverFrame: parseCoverFrames(map[COVER_FRAME_KEY]),
       faviconUrl: map.store_favicon_url || null,
       address: map.store_address || null,
       city: map.store_city || null,

@@ -13,7 +13,7 @@ import { CATALOG_FILTER_KEYS, CATALOG_FILTER_LABELS } from "@/lib/estate/catalog
 import { STORE_TEMPLATES } from "./templates";
 import { ABOUT_VALUES_KEY, aboutValuesSchema } from "@/lib/about-values";
 import { CONSORCIO_KEY, CONSORCIO_PATH, consorcioSchema } from "@/lib/consorcio";
-import { COVER_FRAME_KEY, normalizeCoverFrame } from "@/lib/cover-frame";
+import { COVER_FRAME_KEY, normalizeCoverFrames } from "@/lib/cover-frame";
 import { HOME_SHORTS_KEY, homeShortsSchema, youtubeId } from "@/lib/home-shorts";
 import { ARQ_CONFIG_KEY, ARQ_ENABLED_KEY, ARQ_SETTINGS_KEY, arqConfigSchema, arqContentSchema } from "@/lib/arquitectura";
 
@@ -107,10 +107,10 @@ async function runUpdateHome(formData: FormData) {
   return { ok: true as const };
 }
 
-export async function updateCoverFrame(frame: { x: number; y: number; zoom: number }) {
+export async function updateCoverFrame(frames: unknown) {
   try {
     const { tenant } = await requireTenantAdmin();
-    const value = JSON.stringify(normalizeCoverFrame(frame));
+    const value = JSON.stringify(normalizeCoverFrames(frames));
     await prisma.settings.upsert({
       where: { tenantId_key: { tenantId: tenant.id, key: COVER_FRAME_KEY } },
       update: { value },
