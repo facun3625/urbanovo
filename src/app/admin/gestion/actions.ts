@@ -8,7 +8,8 @@ import { Prisma } from "@/generated/prisma/client";
 import { requireTenantAdmin } from "@/lib/require-admin";
 import { ActionError, toUserError } from "@/lib/action-error";
 import { saveUploadedFile } from "@/lib/storage";
-import { FLOOR_PLAN_TYPES, MAX_FLOOR_PLAN_SIZE } from "@/lib/estate/property-features";
+import { FLOOR_PLAN_TYPES, MAX_FLOOR_PLAN_SIZE, MAX_PHOTOS_PER_SAVE } from "@/lib/estate/property-features";
+import { nextPropertyCode } from "@/lib/estate/property-code";
 import { receiveEstatePayment } from "@/lib/estate/ledger";
 import { periodDueDate } from "@/lib/estate/billing-automation";
 import { runEstateBillingCycle } from "@/lib/estate/billing-cron";
@@ -173,8 +174,8 @@ export async function saveEstateRecord(
       .getAll("images")
       .filter((f): f is File => f instanceof File && f.size > 0);
     if (
-      files.length > 10 ||
-      files.reduce((n, f) => n + f.size, 0) > 18 * 1024 * 1024 ||
+      files.length > MAX_PHOTOS_PER_SAVE ||
+      files.reduce((n, f) => n + f.size, 0) > 45 * 1024 * 1024 ||
       files.some(
         (f) =>
           f.size > 8 * 1024 * 1024 ||
@@ -182,7 +183,7 @@ export async function saveEstateRecord(
       )
     )
       throw new ActionError(
-        "Subí hasta 10 imágenes JPG, PNG o WEBP, de hasta 8 MB cada una y 18 MB en total.",
+        `Subí hasta ${MAX_PHOTOS_PER_SAVE} imágenes JPG, PNG o WEBP, de hasta 8 MB cada una y 45 MB en total.`,
       );
     const uploads: string[] = [];
     let floorPlanUrl: string | null | undefined;
@@ -207,8 +208,8 @@ export async function saveEstateRecord(
       if (floorPlan instanceof File && floorPlan.size > 0) {
         if (floorPlan.size > MAX_FLOOR_PLAN_SIZE || !FLOOR_PLAN_TYPES.some((type) => type === floorPlan.type))
           throw new ActionError("El plano debe ser JPG, PNG, WEBP o PDF de hasta 8 MB.");
-        if (files.reduce((total, file) => total + file.size, floorPlan.size) > 18 * 1024 * 1024)
-          throw new ActionError("Las fotos y el plano no pueden superar 18 MB por envío.");
+        if (files.reduce((total, file) => total + file.size, floorPlan.size) > 45 * 1024 * 1024)
+          throw new ActionError("Las fotos y el plano no pueden superar 45 MB por envío.");
         floorPlanUrl = await saveUploadedFile(floorPlan, `${tenant.id}/properties/plans`);
       } else if (form.has("removeFloorPlan")) {
         floorPlanUrl = null;
@@ -408,9 +409,13 @@ export async function saveEstateRecord(
               offerType === "RENT" || offerType === "RENT_TEMP" || offerType === "BOTH";
             const temporary = offerType === "RENT_TEMP";
             await verifyRelations(tx, tenantId, data);
+            // Sin código: al editar se deja el que tenía; al crear, el siguiente.
+            const { code, ...rest } = data;
             record = id
-              ? await tx.estateProperty.update({ where, data: { ...data, floorPlanUrl } })
-              : await tx.estateProperty.create({ data: { ...data, floorPlanUrl, tenantId } });
+              ? await tx.estateProperty.update({ where, data: { ...rest, ...(code ? { code } : {}), floorPlanUrl } })
+              : await tx.estateProperty.create({
+                  data: { ...rest, code: code || (await nextPropertyCode(tx, tenantId)), floorPlanUrl, tenantId },
+                });
             for (const [operation, enabled, price, currency, isTemporary, whatsapp, showPrice, status] of [
               ["SALE", saleEnabled, salePrice, saleCurrency, false, saleWhatsapp, saleShowPrice, saleStatus],
               ["RENT", rentEnabled, rentPrice, rentCurrency, temporary, rentWhatsapp, rentShowPrice, rentStatus],

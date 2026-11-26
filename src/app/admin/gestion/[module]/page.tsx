@@ -188,7 +188,7 @@ export default async function EstateModulePage({
           select: {
             createdAt: true,
             propertyId: true,
-            contact: { select: { id: true, email: true } },
+            contact: { select: { id: true, name: true, email: true, phone: true } },
             statusChanges: {
               orderBy: { createdAt: "asc" },
               select: { id: true, status: true, changedByName: true, createdAt: true },
@@ -327,6 +327,7 @@ export default async function EstateModulePage({
               createdAt={inquiryDate.format(inquiryHistory.createdAt)}
               history={inquiryHistory.statusChanges.map(({ createdAt, ...c }) => ({ ...c, when: inquiryDate.format(createdAt) }))}
               closeHref={`${base}?${query}`}
+              contact={inquiryHistory.contact}
               mailHref={
                 inquiryHistory.contact.email
                   ? `/admin/email-marketing/nuevo?contacto=${inquiryHistory.contact.id}${inquiryHistory.propertyId ? `&propiedad=${inquiryHistory.propertyId}` : ""}`

@@ -115,7 +115,8 @@ export const contactSchema = z.object({
 });
 export const propertySchema = z
   .object({
-    code: requiredText,
+    // Vacío: lo completa el sistema con el siguiente código (ver nextPropertyCode).
+    code: z.string().trim().max(60),
     title: requiredText,
     propertyType: requiredText,
     city: requiredText,

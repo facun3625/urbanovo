@@ -126,7 +126,7 @@ export const modules: Record<string, Module> = {
       "Tu cartera, sus propietarios y publicaciones de venta o alquiler.",
     fields: [
       { name: "section-publicacion", type: "section", label: "Publicación" },
-      { name: "code", label: "Código interno", required: true },
+      { name: "code", label: "Código interno", hint: "Opcional: si lo dejás vacío, el sistema pone el siguiente (por ejemplo UN-089)." },
       { name: "title", label: "Título de la publicación", required: true },
       { name: "published", label: "Publicar en el sitio", type: "checkbox" },
       { name: "featured", label: "Destacar", type: "checkbox" },
@@ -188,7 +188,7 @@ export const modules: Record<string, Module> = {
         name: "images",
         label: "Fotografías",
         type: "file",
-        hint: "JPG, PNG o WEBP. Hasta 10 imágenes nuevas de 8 MB cada una; 18 MB por envío. La primera foto es la portada — arrastrá las miniaturas para ordenarlas.",
+        hint: "JPG, PNG o WEBP. Hasta 30 fotos por vez; se achican solas antes de subir. La primera foto es la portada — arrastrá las miniaturas para ordenarlas.",
       },
       {
         name: "floorPlanUrl",

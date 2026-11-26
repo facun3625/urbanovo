@@ -13,6 +13,7 @@ import {
 } from "@dnd-kit/core";
 import { SortableContext, rectSortingStrategy, useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import { MAX_PHOTOS_PER_SAVE } from "@/lib/estate/property-features";
 import {
   deleteEstatePropertyImage,
   reorderEstatePropertyImages,
@@ -26,6 +27,33 @@ function move<T>(arr: T[], from: number, to: number): T[] {
   const [item] = copy.splice(from, 1);
   copy.splice(to, 0, item);
   return copy;
+}
+
+// Achica la foto en el navegador antes de subirla (máx. 2000 px, JPEG): así
+// entran 30 fotos de celular en un solo envío. El servidor igual la vuelve a
+// comprimir. Si algo falla, se manda la original.
+const MAX_SIDE = 2000;
+async function shrinkImage(file: File): Promise<File> {
+  try {
+    const bitmap = await createImageBitmap(file, { imageOrientation: "from-image" });
+    const scale = Math.min(1, MAX_SIDE / Math.max(bitmap.width, bitmap.height));
+    if (scale === 1 && file.size < 1.5 * 1024 * 1024) {
+      bitmap.close();
+      return file;
+    }
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.round(bitmap.width * scale);
+    canvas.height = Math.round(bitmap.height * scale);
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return file;
+    ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+    bitmap.close();
+    const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/jpeg", 0.85));
+    if (!blob || blob.size >= file.size) return file;
+    return new File([blob], file.name.replace(/\.[^.]+$/, "") + ".jpg", { type: "image/jpeg" });
+  } catch {
+    return file;
+  }
 }
 
 function syncFileInput(input: HTMLInputElement | null, files: File[]) {
@@ -47,6 +75,7 @@ export function PropertyImagesManager({
   const [items, setItems] = useState(images);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [pendingFiles, setPendingFiles] = useState<File[]>([]);
+  const [preparing, setPreparing] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   // dnd-kit numera sus ids de accesibilidad con un contador propio, que no da
   // igual en el servidor y en el navegador (error de hidratación). useId sí.
@@ -112,10 +141,21 @@ export function PropertyImagesManager({
     }
   }
 
-  function handleAddFiles(e: React.ChangeEvent<HTMLInputElement>) {
-    const added = Array.from(e.target.files ?? []);
+  async function handleAddFiles(e: React.ChangeEvent<HTMLInputElement>) {
+    const input = e.target;
+    const added = Array.from(input.files ?? []);
+    // El input tiene que quedar con las que ya estaban mientras se achican.
+    syncFileInput(input, pendingFiles);
     if (!added.length) return;
-    const merged = [...pendingFiles, ...added].slice(0, 10);
+    const room = MAX_PHOTOS_PER_SAVE - pendingFiles.length;
+    if (added.length > room)
+      toast.error(`Se suben hasta ${MAX_PHOTOS_PER_SAVE} fotos por vez. Guardá y después agregá el resto.`);
+    const batch = added.slice(0, Math.max(0, room));
+    if (!batch.length) return;
+    setPreparing(true);
+    const shrunk = await Promise.all(batch.map(shrinkImage));
+    setPreparing(false);
+    const merged = [...pendingFiles, ...shrunk];
     setPendingFiles(merged);
     syncFileInput(inputRef.current, merged);
     onDirty();
@@ -174,7 +214,7 @@ export function PropertyImagesManager({
       )}
       <label className="flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-dashed p-4 text-sm text-muted-foreground hover:border-primary hover:text-primary">
         <ImagePlusIcon className="size-4" />
-        Agregar fotografías
+        {preparing ? "Preparando fotos…" : "Agregar fotografías"}
         <input
           ref={inputRef}
           name="images"

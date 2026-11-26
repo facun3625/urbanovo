@@ -3,12 +3,14 @@
 import { useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { MailIcon, Trash2 } from "lucide-react";
+import { CopyIcon, MailIcon, PhoneIcon, Trash2, UserRoundIcon } from "lucide-react";
 import { toast } from "sonner";
 
 import { useConfirm } from "@/components/admin/confirm-provider";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { toWhatsAppLink } from "@/lib/social-links";
+import { WhatsAppIcon } from "@/components/catalog/social-icons";
 import { consultaStatusBadgeClass, labels } from "@/lib/estate/modules";
 import { INQUIRY_STATUSES } from "@/lib/estate/inquiry-status";
 import { deleteEstateInquiry, setEstateInquiryStatus } from "@/app/admin/gestion/actions";
@@ -31,6 +33,7 @@ export function InquiryStatusPanel({
   createdAt,
   history,
   closeHref,
+  contact = null,
   mailHref = null,
 }: {
   id: string;
@@ -38,6 +41,8 @@ export function InquiryStatusPanel({
   createdAt: string;
   history: InquiryStatusEvent[];
   closeHref: string;
+  // Datos de la persona que consultó, a mano para llamarla o escribirle.
+  contact?: { id: string; name: string; email: string | null; phone: string | null } | null;
   // Atajo al armado de mail con el cliente (y la propiedad) ya cargados.
   mailHref?: string | null;
 }) {
@@ -78,8 +83,72 @@ export function InquiryStatusPanel({
     });
   }
 
+  function copy(text: string) {
+    navigator.clipboard.writeText(text).then(
+      () => toast.success("Copiado"),
+      () => toast.error("No se pudo copiar"),
+    );
+  }
+
   return (
     <div className="mb-6 space-y-4 rounded-xl border bg-muted/30 p-4">
+      {contact && (
+        <div className="flex flex-col gap-3 rounded-lg border bg-background p-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex min-w-0 flex-col gap-1 text-sm">
+            <Link
+              href={`/admin/gestion/clientes/${contact.id}`}
+              className="flex items-center gap-1.5 font-semibold hover:underline"
+            >
+              <UserRoundIcon className="size-4 text-muted-foreground" />
+              {contact.name}
+            </Link>
+            <div className="flex flex-wrap gap-x-4 gap-y-1 text-muted-foreground">
+              {contact.email ? (
+                <button type="button" onClick={() => copy(contact.email!)} className="flex items-center gap-1.5 hover:text-foreground" title="Copiar mail">
+                  <MailIcon className="size-3.5" />
+                  <span className="select-all">{contact.email}</span>
+                  <CopyIcon className="size-3 opacity-60" />
+                </button>
+              ) : (
+                <span className="flex items-center gap-1.5"><MailIcon className="size-3.5" />Sin mail</span>
+              )}
+              {contact.phone ? (
+                <button type="button" onClick={() => copy(contact.phone!)} className="flex items-center gap-1.5 hover:text-foreground" title="Copiar teléfono">
+                  <PhoneIcon className="size-3.5" />
+                  <span className="select-all">{contact.phone}</span>
+                  <CopyIcon className="size-3 opacity-60" />
+                </button>
+              ) : (
+                <span className="flex items-center gap-1.5"><PhoneIcon className="size-3.5" />Sin teléfono</span>
+              )}
+            </div>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {contact.phone && (
+              <>
+                <Button size="sm" variant="outline" render={<a href={`tel:${contact.phone.replace(/[^\d+]/g, "")}`} />}>
+                  <PhoneIcon className="size-3.5" />
+                  Llamar
+                </Button>
+                <Button
+                  size="sm"
+                  className="bg-[#25D366] text-white hover:bg-[#25D366]/90"
+                  render={<a href={toWhatsAppLink(contact.phone)} target="_blank" rel="noreferrer" />}
+                >
+                  <WhatsAppIcon className="size-3.5" />
+                  WhatsApp
+                </Button>
+              </>
+            )}
+            {contact.email && (
+              <Button size="sm" variant="outline" render={<a href={`mailto:${contact.email}`} />}>
+                <MailIcon className="size-3.5" />
+                Mail directo
+              </Button>
+            )}
+          </div>
+        </div>
+      )}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-wrap gap-2" role="group" aria-label="Estado de la consulta">
           {INQUIRY_STATUSES.map((s) => (
