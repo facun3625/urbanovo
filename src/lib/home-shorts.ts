@@ -5,7 +5,7 @@ import { z } from "zod";
 // ("home_shorts"). Este archivo no toca la base: lo usa también el
 // formulario del panel.
 export const HOME_SHORTS_KEY = "home_shorts";
-export const MAX_HOME_SHORTS = 8;
+export const MAX_HOME_SHORTS = 16;
 
 const text = (max: number) => z.string().trim().max(max);
 
