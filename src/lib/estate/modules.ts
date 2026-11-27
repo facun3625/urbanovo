@@ -129,6 +129,12 @@ export const modules: Record<string, Module> = {
       { name: "code", label: "Código interno", hint: "Opcional: si lo dejás vacío, el sistema pone el siguiente (por ejemplo UN-089)." },
       { name: "title", label: "Título de la publicación", required: true },
       { name: "published", label: "Publicar en el sitio", type: "checkbox" },
+      {
+        name: "publishedAt",
+        label: "Fecha y hora de publicación",
+        type: "datetime-local",
+        hint: "Ordena «Ver todas las propiedades»: las más nuevas primero. Vacía, al crearla se usa el momento actual.",
+      },
       { name: "featured", label: "Destacar", type: "checkbox" },
       { name: "propertyType", label: "Tipo" },
       {

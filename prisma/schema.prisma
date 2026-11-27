@@ -464,6 +464,9 @@ model EstateProperty {
   featuredOrder  Int                      @default(0)
   ownerId        String?
   developmentId  String?
+  // Fecha de publicación: se edita en el panel y ordena "Ver todas las
+  // propiedades" (las más nuevas primero). Al crearla, es el momento de carga.
+  publishedAt    DateTime                 @default(now())
   createdAt      DateTime                 @default(now())
   updatedAt      DateTime                 @updatedAt
   tenant         Tenant                   @relation(fields: [tenantId], references: [id])

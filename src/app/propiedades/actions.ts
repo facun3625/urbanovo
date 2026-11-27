@@ -77,7 +77,7 @@ export async function getFavoritePropertiesByIds(ids: string[]) {
       media: { orderBy: { position: "asc" }, take: 1 },
       listings: { where: { status: { in: (await getStoreSettings(tenant.id)).publicStatuses } } },
     },
-    orderBy: { createdAt: "desc" },
+    orderBy: { publishedAt: "desc" },
   });
 }
 

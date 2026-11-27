@@ -109,7 +109,7 @@ export default async function PropertyPage({
         media: { orderBy: { position: "asc" }, take: 1 },
         listings: { where: { status: { in: statuses } } },
       },
-      orderBy: [{ featured: "desc" }, { createdAt: "desc" }],
+      orderBy: [{ featured: "desc" }, { publishedAt: "desc" }],
       take: 4,
     }),
     getStoreSettings(p.tenantId),

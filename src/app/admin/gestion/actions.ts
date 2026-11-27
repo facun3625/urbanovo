@@ -410,11 +410,12 @@ export async function saveEstateRecord(
             const temporary = offerType === "RENT_TEMP";
             await verifyRelations(tx, tenantId, data);
             // Sin código: al editar se deja el que tenía; al crear, el siguiente.
-            const { code, ...rest } = data;
+            const { code, publishedAt, ...rest } = data;
+            const dates = publishedAt ? { publishedAt } : {};
             record = id
-              ? await tx.estateProperty.update({ where, data: { ...rest, ...(code ? { code } : {}), floorPlanUrl } })
+              ? await tx.estateProperty.update({ where, data: { ...rest, ...dates, ...(code ? { code } : {}), floorPlanUrl } })
               : await tx.estateProperty.create({
-                  data: { ...rest, code: code || (await nextPropertyCode(tx, tenantId)), floorPlanUrl, tenantId },
+                  data: { ...rest, ...dates, code: code || (await nextPropertyCode(tx, tenantId)), floorPlanUrl, tenantId },
                 });
             for (const [operation, enabled, price, currency, isTemporary, whatsapp, showPrice, status] of [
               ["SALE", saleEnabled, salePrice, saleCurrency, false, saleWhatsapp, saleShowPrice, saleStatus],

@@ -11,6 +11,7 @@ import { StoreFooter } from "@/components/catalog/store-footer";
 import { PropertyCard } from "@/components/estate/property-card";
 import { PropertySearchForm } from "@/components/estate/property-search-form";
 import { ViewToggle, toResultsQueryString } from "@/components/estate/view-toggle";
+import { QuickFilters } from "@/components/estate/quick-filters";
 import { estatePropertyFilterOptions } from "@/lib/estate/data";
 import { parseCatalogFilters, buildPublishedPropertyWhere, listingOperationWhere } from "@/lib/estate/catalog-filters";
 import { getPublicCatalogFilters, getCatalogFilterLabels } from "@/lib/estate/catalog-filter-settings";
@@ -22,6 +23,9 @@ export const metadata = {
   description: "Casas, departamentos, terrenos y locales en venta y alquiler. Filtrá por zona, tipo, precio y dormitorios.",
   alternates: { canonical: "/propiedades" },
 };
+
+// Propiedades por página (múltiplo de 2, 3 y 4: llena las filas de la grilla).
+const PAGE_SIZE = 24;
 
 export default async function PropiedadesPage({
   searchParams,
@@ -47,7 +51,7 @@ export default async function PropiedadesPage({
   const hasFilters = Object.values(filters).some((value) => value !== undefined && value !== "");
   const session = await auth();
   const propertyWhere = buildPublishedPropertyWhere(tenant.id, filters, storeSettings.publicStatuses);
-  const [properties, totalCount, favoriteIds] = await Promise.all([
+  const [properties, totalCount, favoriteIds, typesInUse] = await Promise.all([
     prisma.estateProperty.findMany({
       where: propertyWhere,
       include: {
@@ -56,9 +60,10 @@ export default async function PropiedadesPage({
           where: { status: { in: storeSettings.publicStatuses }, ...listingOperationWhere(filters.operation) },
         },
       },
-      orderBy: [{ featured: "desc" }, { featuredOrder: "asc" }, { createdAt: "desc" }],
-      take: 13,
-      skip: (page - 1) * 12,
+      // Las más nuevas primero, según la fecha de publicación del panel.
+      orderBy: [{ publishedAt: "desc" }, { createdAt: "desc" }],
+      take: PAGE_SIZE + 1,
+      skip: (page - 1) * PAGE_SIZE,
     }),
     prisma.estateProperty.count({ where: propertyWhere }),
     session?.user
@@ -67,9 +72,15 @@ export default async function PropiedadesPage({
           select: { propertyId: true },
         })
       : Promise.resolve([]),
+    // Tipos con al menos una propiedad visible: los únicos que van como filtro rápido.
+    prisma.estateProperty.groupBy({
+      by: ["propertyType"],
+      where: buildPublishedPropertyWhere(tenant.id, {}, storeSettings.publicStatuses),
+    }),
   ]);
+  const usedTypes = new Set(typesInUse.map((t) => t.propertyType));
   const favoritedSet = new Set(favoriteIds.map((f) => f.propertyId));
-  const hasNext = properties.length > 12;
+  const hasNext = properties.length > PAGE_SIZE;
   function pageHref(n: number) {
     return `/propiedades?${new URLSearchParams({
       q: search.q ?? "",
@@ -128,8 +139,13 @@ export default async function PropiedadesPage({
             </p>
             <ViewToggle active="list" query={toResultsQueryString(search)} />
           </div>
+          <QuickFilters
+            search={search}
+            showOperation={enabledFilters.includes("operation")}
+            propertyTypes={enabledFilters.includes("propertyType") ? filterOptions.propertyTypes.filter((t) => usedTypes.has(t)) : []}
+          />
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {properties.slice(0, 12).map((p) => (
+            {properties.slice(0, PAGE_SIZE).map((p) => (
               <PropertyCard
                 key={p.id}
                 property={p}

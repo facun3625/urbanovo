@@ -117,6 +117,11 @@ export const propertySchema = z
   .object({
     // Vacío: lo completa el sistema con el siguiente código (ver nextPropertyCode).
     code: z.string().trim().max(60),
+    // Vacía: al crear, ahora; al editar, se deja la que tenía.
+    publishedAt: z
+      .union([z.literal(""), instant])
+      .optional()
+      .transform((v) => v || null),
     title: requiredText,
     propertyType: requiredText,
     city: requiredText,
