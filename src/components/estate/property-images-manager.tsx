@@ -20,6 +20,8 @@ import {
 } from "@/app/admin/gestion/actions";
 
 type ExistingImage = { id: string; url: string };
+// Foto elegida que todavía no se guardó: se sube en este orden al guardar.
+type PendingPhoto = { id: string; file: File; url: string };
 
 function move<T>(arr: T[], from: number, to: number): T[] {
   if (to < 0 || to >= arr.length) return arr;
@@ -74,20 +76,34 @@ export function PropertyImagesManager({
 }) {
   const [items, setItems] = useState(images);
   const [busyId, setBusyId] = useState<string | null>(null);
-  const [pendingFiles, setPendingFiles] = useState<File[]>([]);
+  const [pending, setPending] = useState<PendingPhoto[]>([]);
+  const pendingFiles = useMemo(() => pending.map((p) => p.file), [pending]);
   const [preparing, setPreparing] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   // dnd-kit numera sus ids de accesibilidad con un contador propio, que no da
   // igual en el servidor y en el navegador (error de hidratación). useId sí.
   const dndId = useId();
 
-  const previews = useMemo(
-    () => pendingFiles.map((f) => URL.createObjectURL(f)),
-    [pendingFiles],
-  );
+  // Libera las vistas previas al salir de la pantalla.
+  const pendingRef = useRef(pending);
   useEffect(() => {
-    return () => previews.forEach((u) => URL.revokeObjectURL(u));
-  }, [previews]);
+    pendingRef.current = pending;
+  }, [pending]);
+  useEffect(() => () => pendingRef.current.forEach((p) => URL.revokeObjectURL(p.url)), []);
+
+  function updatePending(next: PendingPhoto[]) {
+    setPending(next);
+    syncFileInput(inputRef.current, next.map((p) => p.file));
+    onDirty();
+  }
+
+  function handlePendingDragEnd({ active, over }: DragEndEvent) {
+    if (!over || active.id === over.id) return;
+    const from = pending.findIndex((p) => p.id === active.id);
+    const to = pending.findIndex((p) => p.id === over.id);
+    if (from < 0 || to < 0) return;
+    updatePending(move(pending, from, to));
+  }
 
   // Con mouse arranca al mover unos píxeles (un click normal sigue tocando
   // la estrella o el tacho). En el celular hay que mantener apretado un
@@ -155,17 +171,14 @@ export function PropertyImagesManager({
     setPreparing(true);
     const shrunk = await Promise.all(batch.map(shrinkImage));
     setPreparing(false);
-    const merged = [...pendingFiles, ...shrunk];
-    setPendingFiles(merged);
-    syncFileInput(inputRef.current, merged);
-    onDirty();
+    const fresh = shrunk.map((file) => ({ id: crypto.randomUUID(), file, url: URL.createObjectURL(file) }));
+    updatePending([...pending, ...fresh]);
   }
 
-  function removePending(index: number) {
-    const merged = pendingFiles.filter((_, i) => i !== index);
-    setPendingFiles(merged);
-    syncFileInput(inputRef.current, merged);
-    onDirty();
+  function removePending(id: string) {
+    const gone = pending.find((p) => p.id === id);
+    if (gone) URL.revokeObjectURL(gone.url);
+    updatePending(pending.filter((p) => p.id !== id));
   }
 
   return (
@@ -194,22 +207,29 @@ export function PropertyImagesManager({
           </SortableContext>
         </DndContext>
       )}
-      {previews.length > 0 && (
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
-          {previews.map((src, i) => (
-            <div key={src} className="group relative overflow-hidden rounded-xl border border-dashed">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={src} alt="" className="aspect-square w-full object-cover opacity-80" />
-              <button
-                type="button"
-                onClick={() => removePending(i)}
-                aria-label="Quitar foto"
-                className="absolute right-1.5 top-1.5 rounded-full bg-black/60 p-1 text-white hover:bg-black/80"
-              >
-                <Trash2Icon className="size-3.5" />
-              </button>
-            </div>
-          ))}
+      {pending.length > 0 && (
+        <div className="space-y-2">
+          <p className="text-xs text-muted-foreground">
+            {items.length > 0 ? "Fotos nuevas (se agregan al final al guardar)" : "Fotos nuevas"}: arrastralas para
+            ordenarlas antes de guardar.{items.length === 0 && " La primera es la portada."}
+          </p>
+          <DndContext id={`${dndId}-new`} sensors={sensors} collisionDetection={closestCenter} onDragEnd={handlePendingDragEnd}>
+            <SortableContext items={pending.map((p) => p.id)} strategy={rectSortingStrategy}>
+              <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-6">
+                {pending.map((p, i) => (
+                  <SortablePhoto
+                    key={p.id}
+                    image={p}
+                    pending
+                    isCover={items.length === 0 && i === 0}
+                    busy={false}
+                    onSetCover={items.length === 0 ? () => updatePending(move(pending, i, 0)) : undefined}
+                    onDelete={() => removePending(p.id)}
+                  />
+                ))}
+              </div>
+            </SortableContext>
+          </DndContext>
         </div>
       )}
       <label className="flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-dashed p-4 text-sm text-muted-foreground hover:border-primary hover:text-primary">
@@ -233,13 +253,16 @@ function SortablePhoto({
   image,
   isCover,
   busy,
+  pending = false,
   onSetCover,
   onDelete,
 }: {
   image: ExistingImage;
   isCover: boolean;
   busy: boolean;
-  onSetCover: () => void;
+  // Todavía sin guardar: borde punteado.
+  pending?: boolean;
+  onSetCover?: () => void;
   onDelete: () => void;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
@@ -252,7 +275,7 @@ function SortablePhoto({
       style={{ transform: CSS.Transform.toString(transform), transition }}
       {...attributes}
       {...listeners}
-      className={`group relative aspect-square cursor-grab touch-manipulation select-none overflow-hidden rounded-xl border [-webkit-touch-callout:none] active:cursor-grabbing ${
+      className={`group relative aspect-square cursor-grab touch-manipulation select-none overflow-hidden rounded-xl border [-webkit-touch-callout:none] active:cursor-grabbing ${pending ? "border-dashed" : ""} ${
         isDragging ? "z-10 opacity-80 shadow-xl ring-2 ring-primary" : ""
       }`}
     >
@@ -280,7 +303,7 @@ function SortablePhoto({
           <StarIcon className="size-3 fill-current" />
           Portada
         </span>
-      ) : (
+      ) : onSetCover ? (
         <button
           type="button"
           disabled={busy}
@@ -292,7 +315,7 @@ function SortablePhoto({
           <StarIcon className="size-3" />
           <span className="hidden group-hover:inline">Hacer portada</span>
         </button>
-      )}
+      ) : null}
     </div>
   );
 }
